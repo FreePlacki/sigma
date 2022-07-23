@@ -1,3 +1,4 @@
+use crate::error::{error, ErrorType};
 use crate::tokens::{Token, TokenType};
 
 pub struct Scanner {
@@ -80,6 +81,13 @@ impl Scanner {
                 let lexeme = self.source[self.start..self.current].to_string();
                 if lexeme != "." {
                     add_token!(TokenType::Number, lexeme)
+                } else {
+                    error(
+                        &self.source,
+                        self.line,
+                        self.current,
+                        ErrorType::UnexpectedCharacter,
+                    );
                 }
             }
 
@@ -107,8 +115,12 @@ impl Scanner {
                 )
             }
 
-            _ => { //TODO: add error
-            }
+            _ => error(
+                &self.source,
+                self.line,
+                self.current,
+                ErrorType::UnexpectedCharacter,
+            ),
         }
     }
 
