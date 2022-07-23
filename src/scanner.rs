@@ -68,6 +68,7 @@ impl Scanner {
                 {
                     self.advance();
                 }
+
                 if self.peek() == '.' && self.peek_next().is_ascii_digit() {
                     self.advance();
 
@@ -75,10 +76,11 @@ impl Scanner {
                         self.advance();
                     }
                 }
-                add_token!(
-                    TokenType::Number,
-                    self.source[self.start..self.current].to_string()
-                )
+
+                let lexeme = self.source[self.start..self.current].to_string();
+                if lexeme != "." {
+                    add_token!(TokenType::Number, lexeme)
+                }
             }
 
             '#' => {
@@ -89,7 +91,23 @@ impl Scanner {
                 self.advance();
                 self.line += 1;
             }
-            _ => { //TODO: handle
+
+            '\t' => add_token!(TokenType::Tab),
+            ' ' | '\r' => {}
+            '\n' => self.line += 1,
+
+            'a'..='z' | 'A'..='Z' => {
+                while self.peek().is_ascii_alphanumeric() || self.peek() == '_' {
+                    self.advance();
+                }
+
+                add_token!(
+                    TokenType::Identifier,
+                    self.source[self.start..self.current].to_string()
+                )
+            }
+
+            _ => { //TODO: add error
             }
         }
     }
