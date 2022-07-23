@@ -36,7 +36,7 @@ impl Scanner {
                     kind: $type,
                     lexeme: $lexeme,
                     line: self.line,
-                    start: self.current - 1,
+                    start: self.start,
                 })
             };
             ($type: expr) => {
@@ -44,7 +44,7 @@ impl Scanner {
                     kind: $type,
                     lexeme: self.source.chars().nth(self.current).unwrap().to_string(),
                     line: self.line,
-                    start: self.current,
+                    start: self.start,
                 })
             };
         }
@@ -63,11 +63,12 @@ impl Scanner {
             '=' => add_token!(TokenType::Equals),
 
             '0'..='9' | '.' => {
-                while self.peek().is_ascii_digit() {
+                while self.peek().is_ascii_digit()
+                    || ([',', '_'].contains(&self.peek()) && self.peek_next().is_ascii_digit())
+                {
                     self.advance();
                 }
-                // TODO: allow more than one '_' and ','
-                if ['.', ',', '_'].contains(&self.peek()) && self.peek_next().is_ascii_digit() {
+                if self.peek() == '.' && self.peek_next().is_ascii_digit() {
                     self.advance();
 
                     while self.peek().is_ascii_digit() {
