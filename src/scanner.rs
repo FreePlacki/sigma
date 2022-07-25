@@ -26,6 +26,12 @@ impl Scanner {
             self.scan_token();
         }
 
+        self.tokens.push(Token {
+            kind: TokenType::Eof,
+            lexeme: "".to_string(),
+            line: self.line,
+            start: self.current,
+        });
         &self.tokens
     }
 
@@ -43,7 +49,12 @@ impl Scanner {
             ($type: expr) => {
                 self.tokens.push(Token {
                     kind: $type,
-                    lexeme: self.source.chars().nth(self.current).unwrap().to_string(),
+                    lexeme: self
+                        .source
+                        .chars()
+                        .nth(self.current - 1)
+                        .unwrap()
+                        .to_string(),
                     line: self.line,
                     start: self.start,
                 })

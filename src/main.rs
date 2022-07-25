@@ -1,4 +1,6 @@
 mod error;
+mod expr;
+mod parser;
 mod scanner;
 mod tokens;
 
@@ -8,7 +10,11 @@ use std::io::Write;
 fn run(source: String) {
     let mut scanner = scanner::Scanner::new(source);
     let tokens = scanner.scan();
-    println!("{:?}", tokens);
+    dbg!(tokens);
+    let mut parser = parser::Parser::new(tokens.to_owned());
+    parser.parse();
+    let expressions = parser.expressions;
+    dbg!(expressions);
 }
 
 fn run_prompt() {
