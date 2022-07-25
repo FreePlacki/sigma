@@ -1,5 +1,5 @@
-use crate::error::{error, ErrorType};
-use crate::tokens::{Token, TokenType};
+use crate::error::{error, ErrorKind};
+use crate::tokens::{Token, TokenKind};
 
 pub struct Scanner {
     source: String,
@@ -27,7 +27,7 @@ impl Scanner {
         }
 
         self.tokens.push(Token {
-            kind: TokenType::Eof,
+            kind: TokenKind::Eof,
             lexeme: "".to_string(),
             line: self.line,
             start: self.current,
@@ -38,17 +38,17 @@ impl Scanner {
     fn scan_token(&mut self) {
         // use macro to have optional argument
         macro_rules! add_token {
-            ($type: expr, $lexeme: expr) => {
+            ($kind: expr, $lexeme: expr) => {
                 self.tokens.push(Token {
-                    kind: $type,
+                    kind: $kind,
                     lexeme: $lexeme,
                     line: self.line,
                     start: self.start,
                 })
             };
-            ($type: expr) => {
+            ($kind: expr) => {
                 self.tokens.push(Token {
-                    kind: $type,
+                    kind: $kind,
                     lexeme: self
                         .source
                         .chars()
@@ -64,15 +64,15 @@ impl Scanner {
         let c = self.advance();
 
         match c {
-            '(' => add_token!(TokenType::LeftParen),
-            ')' => add_token!(TokenType::RightParen),
-            '-' => add_token!(TokenType::Minus),
-            '+' => add_token!(TokenType::Plus),
-            '*' => add_token!(TokenType::Star),
-            '/' => add_token!(TokenType::Slash),
-            '^' => add_token!(TokenType::Caret),
-            '!' => add_token!(TokenType::Bang),
-            '=' => add_token!(TokenType::Equals),
+            '(' => add_token!(TokenKind::LeftParen),
+            ')' => add_token!(TokenKind::RightParen),
+            '-' => add_token!(TokenKind::Minus),
+            '+' => add_token!(TokenKind::Plus),
+            '*' => add_token!(TokenKind::Star),
+            '/' => add_token!(TokenKind::Slash),
+            '^' => add_token!(TokenKind::Caret),
+            '!' => add_token!(TokenKind::Bang),
+            '=' => add_token!(TokenKind::Equals),
 
             '0'..='9' | '.' => {
                 while self.peek().is_ascii_digit()
@@ -91,13 +91,13 @@ impl Scanner {
 
                 let lexeme = self.source[self.start..self.current].to_string();
                 if lexeme != "." {
-                    add_token!(TokenType::Number, lexeme)
+                    add_token!(TokenKind::Number, lexeme)
                 } else {
                     error(
                         &self.source,
                         self.line,
                         self.current,
-                        ErrorType::UnexpectedCharacter,
+                        ErrorKind::UnexpectedCharacter,
                     );
                 }
             }
@@ -111,7 +111,7 @@ impl Scanner {
                 self.line += 1;
             }
 
-            '\t' => add_token!(TokenType::Tab),
+            '\t' => add_token!(TokenKind::Tab),
             ' ' | '\r' => {}
             '\n' => self.line += 1,
 
@@ -121,7 +121,7 @@ impl Scanner {
                 }
 
                 add_token!(
-                    TokenType::Identifier,
+                    TokenKind::Identifier,
                     self.source[self.start..self.current].to_string()
                 )
             }
@@ -130,7 +130,7 @@ impl Scanner {
                 &self.source,
                 self.line,
                 self.current,
-                ErrorType::UnexpectedCharacter,
+                ErrorKind::UnexpectedCharacter,
             ),
         }
     }

@@ -1,22 +1,22 @@
 use colored::Colorize;
 
-pub enum ErrorType {
+pub enum ErrorKind {
     UnexpectedCharacter,
 }
 
-fn message(err: ErrorType) -> &'static str {
+fn message(err: ErrorKind) -> &'static str {
     match err {
-        ErrorType::UnexpectedCharacter => "Unexpected character",
+        ErrorKind::UnexpectedCharacter => "Unexpected character",
     }
 }
 
-pub fn error(source: &str, line: usize, pos: usize, error_type: ErrorType) {
+pub fn error(source: &str, line: usize, pos: usize, error_kind: ErrorKind) {
     eprintln!(
         "{} [{}:{}] {}",
         "Error".red().bold(),
         line + 1,
         pos,
-        message(error_type).bold()
+        message(error_kind).bold()
     );
     println!("{:>6}", "|".blue().bold());
     println!(

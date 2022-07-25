@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Token {
-    pub kind: TokenType,
+    pub kind: TokenKind,
     pub lexeme: String,
     pub line: usize,
     pub start: usize,
@@ -8,7 +8,7 @@ pub struct Token {
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TokenType {
+pub enum TokenKind {
     // Single-character tokens.
     LeftParen,
     RightParen,

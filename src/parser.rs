@@ -1,6 +1,5 @@
-use crate::error::{error, ErrorType};
 use crate::expr::Expr;
-use crate::tokens::{Token, TokenType};
+use crate::tokens::{Token, TokenKind};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -21,19 +20,19 @@ impl Parser {
         let expr = self.expression();
         self.expressions.push(expr);
 
-        if self.tokens[self.current].kind != TokenType::Eof {
+        if self.tokens[self.current].kind != TokenKind::Eof {
             self.parse()
         }
     }
 
     fn advance(&mut self) -> &Token {
-        if self.tokens[self.current].kind != TokenType::Eof {
+        if self.tokens[self.current].kind != TokenKind::Eof {
             self.current += 1;
         }
         &self.tokens[self.current - 1]
     }
 
-    fn consume(&mut self, kind: TokenType) -> Option<&Token> {
+    fn consume(&mut self, kind: TokenKind) -> Option<&Token> {
         // TODO handle error
         if kind == self.tokens[self.current].kind {
             Some(self.advance())
@@ -42,12 +41,13 @@ impl Parser {
         }
     }
 
-    fn consume_match(&mut self, token_kinds: &[TokenType]) -> bool {
-        for kind in token_kinds {
-            if &self.tokens[self.current].kind == kind {
-                self.advance();
-                return true;
-            }
+    fn consume_match(&mut self, token_kinds: &[TokenKind]) -> bool {
+        if token_kinds
+            .iter()
+            .any(|kind| kind == &self.tokens[self.current].kind)
+        {
+            self.advance();
+            return true;
         }
 
         false
@@ -60,7 +60,7 @@ impl Parser {
     fn term(&mut self) -> Expr {
         let mut expr = self.factor();
 
-        while self.consume_match(&[TokenType::Minus, TokenType::Plus]) {
+        while self.consume_match(&[TokenKind::Minus, TokenKind::Plus]) {
             let operator = self.tokens[self.current - 1].to_owned();
             let right = self.factor();
             expr = Expr::Binary {
@@ -76,7 +76,7 @@ impl Parser {
     fn factor(&mut self) -> Expr {
         let mut expr = self.unary();
 
-        while self.consume_match(&[TokenType::Star, TokenType::Slash]) {
+        while self.consume_match(&[TokenKind::Star, TokenKind::Slash]) {
             let operator = self.tokens[self.current - 1].to_owned();
             let right = self.unary();
             expr = Expr::Binary {
@@ -90,7 +90,7 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Expr {
-        if self.consume_match(&[TokenType::Minus]) {
+        if self.consume_match(&[TokenKind::Minus]) {
             let operator = self.tokens[self.current - 1].to_owned();
             let right = self.unary();
             return Expr::Unary {
@@ -103,16 +103,16 @@ impl Parser {
 
     fn primary(&mut self) -> Expr {
         match self.tokens[self.current].kind {
-            TokenType::Number => {
+            TokenKind::Number => {
                 self.advance();
                 Expr::Number {
                     value: self.tokens[self.current - 1].lexeme.to_owned(),
                 }
             }
-            TokenType::LeftParen => {
+            TokenKind::LeftParen => {
                 self.advance();
                 let expression = Box::new(self.expression());
-                self.consume(TokenType::RightParen);
+                self.consume(TokenKind::RightParen);
                 Expr::Grouping { expression }
             }
             _ => todo!("Handle errors"),
