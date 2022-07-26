@@ -1,6 +1,7 @@
 use crate::tokens::Token;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Expr {
     Number {
         value: String,

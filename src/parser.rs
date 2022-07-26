@@ -1,3 +1,4 @@
+use crate::error::{Error, ErrorKind};
 use crate::expr::Expr;
 use crate::tokens::{Token, TokenKind};
 
@@ -16,12 +17,14 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) {
-        let expr = self.expression();
+    pub fn parse(&mut self) -> Result<&Vec<Expr>, Error> {
+        let expr = self.expression()?;
         self.expressions.push(expr);
 
         if self.tokens[self.current].kind != TokenKind::Eof {
             self.parse()
+        } else {
+            Ok(&self.expressions)
         }
     }
 
@@ -32,12 +35,17 @@ impl Parser {
         &self.tokens[self.current - 1]
     }
 
-    fn consume(&mut self, kind: TokenKind) -> Option<&Token> {
-        // TODO handle error
-        if kind == self.tokens[self.current].kind {
-            Some(self.advance())
+    fn consume(&mut self, kind: TokenKind, error_kind: ErrorKind) -> Result<&Token, Error> {
+        let token = &self.tokens[self.current];
+
+        if kind == token.kind {
+            Ok(self.advance())
         } else {
-            None
+            Err(Error {
+                line: token.line,
+                pos: self.current + 1,
+                kind: error_kind,
+            })
         }
     }
 
@@ -53,16 +61,16 @@ impl Parser {
         false
     }
 
-    fn expression(&mut self) -> Expr {
+    fn expression(&mut self) -> Result<Expr, Error> {
         self.term()
     }
 
-    fn term(&mut self) -> Expr {
-        let mut expr = self.factor();
+    fn term(&mut self) -> Result<Expr, Error> {
+        let mut expr = self.factor()?;
 
         while self.consume_match(&[TokenKind::Minus, TokenKind::Plus]) {
             let operator = self.tokens[self.current - 1].to_owned();
-            let right = self.factor();
+            let right = self.factor()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
@@ -70,52 +78,56 @@ impl Parser {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn factor(&mut self) -> Expr {
-        let mut expr = self.unary();
+    fn factor(&mut self) -> Result<Expr, Error> {
+        let mut expr = self.unary()?;
 
         while self.consume_match(&[TokenKind::Star, TokenKind::Slash]) {
             let operator = self.tokens[self.current - 1].to_owned();
-            let right = self.unary();
+            let right = self.unary()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
                 right: Box::new(right),
-            }
+            };
         }
-
-        expr
+        Ok(expr)
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, Error> {
         if self.consume_match(&[TokenKind::Minus]) {
             let operator = self.tokens[self.current - 1].to_owned();
-            let right = self.unary();
-            return Expr::Unary {
+            let right = self.unary()?;
+            return Ok(Expr::Unary {
                 operator,
                 right: Box::new(right),
-            };
+            });
         }
         self.primary()
     }
 
-    fn primary(&mut self) -> Expr {
-        match self.tokens[self.current].kind {
+    fn primary(&mut self) -> Result<Expr, Error> {
+        let token = &self.tokens[self.current];
+        match token.kind {
             TokenKind::Number => {
                 self.advance();
-                Expr::Number {
+                Ok(Expr::Number {
                     value: self.tokens[self.current - 1].lexeme.to_owned(),
-                }
+                })
             }
             TokenKind::LeftParen => {
                 self.advance();
-                let expression = Box::new(self.expression());
-                self.consume(TokenKind::RightParen);
-                Expr::Grouping { expression }
+                let expression = Box::new(self.expression()?);
+                self.consume(TokenKind::RightParen, ErrorKind::MissingRightParen)?;
+                Ok(Expr::Grouping { expression })
             }
-            _ => todo!("Handle errors"),
+            _ => Err(Error {
+                line: token.line,
+                pos: self.current,
+                kind: ErrorKind::ExpectedExpression,
+            }),
         }
     }
 }

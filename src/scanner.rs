@@ -1,4 +1,4 @@
-use crate::error::{error, ErrorKind};
+use crate::error::{Error, ErrorKind};
 use crate::tokens::{Token, TokenKind};
 
 pub struct Scanner {
@@ -20,10 +20,10 @@ impl Scanner {
         }
     }
 
-    pub fn scan(&mut self) -> &Vec<Token> {
+    pub fn scan(&mut self) -> Result<&Vec<Token>, Error> {
         while self.current < self.source.len() {
             self.start = self.current;
-            self.scan_token();
+            self.scan_token()?
         }
 
         self.tokens.push(Token {
@@ -32,10 +32,10 @@ impl Scanner {
             line: self.line,
             start: self.current,
         });
-        &self.tokens
+        Ok(&self.tokens)
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Result<(), Error> {
         // use macro to have optional argument
         macro_rules! add_token {
             ($kind: expr, $lexeme: expr) => {
@@ -93,12 +93,11 @@ impl Scanner {
                 if lexeme != "." {
                     add_token!(TokenKind::Number, lexeme)
                 } else {
-                    error(
-                        &self.source,
-                        self.line,
-                        self.current,
-                        ErrorKind::UnexpectedCharacter,
-                    );
+                    return Err(Error {
+                        line: self.line,
+                        pos: self.current,
+                        kind: ErrorKind::UnexpectedCharacter,
+                    });
                 }
             }
 
@@ -126,13 +125,16 @@ impl Scanner {
                 )
             }
 
-            _ => error(
-                &self.source,
-                self.line,
-                self.current,
-                ErrorKind::UnexpectedCharacter,
-            ),
+            _ => {
+                return Err(Error {
+                    line: self.line,
+                    pos: self.current,
+                    kind: ErrorKind::UnexpectedCharacter,
+                })
+            }
         }
+
+        Ok(())
     }
 
     fn advance(&mut self) -> char {

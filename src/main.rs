@@ -5,16 +5,17 @@ mod scanner;
 mod tokens;
 
 use colored::Colorize;
+use error::Error;
 use std::io::Write;
 
-fn run(source: String) {
+fn run(source: String) -> Result<(), Error> {
     let mut scanner = scanner::Scanner::new(source);
-    let tokens = scanner.scan();
-    dbg!(tokens);
+    let tokens = scanner.scan()?;
     let mut parser = parser::Parser::new(tokens.to_owned());
-    parser.parse();
-    let expressions = parser.expressions;
+    let expressions = parser.parse()?;
     dbg!(expressions);
+
+    Ok(())
 }
 
 fn run_prompt() {
@@ -26,7 +27,9 @@ fn run_prompt() {
 
         let mut buffer = String::new();
         std::io::stdin().read_line(&mut buffer).unwrap();
-        run(buffer);
+        if let Err(e) = run(buffer.clone()) {
+            e.print_error(&buffer);
+        }
     }
 }
 
@@ -36,7 +39,9 @@ fn main() {
         2 => {
             let contents = std::fs::read_to_string(&args[1]);
             if let Ok(contents) = contents {
-                run(contents);
+                if let Err(e) = run(contents.clone()) {
+                    e.print_error(&contents);
+                }
             } else {
                 eprintln!("Failed to read file '{}'", args[1]);
             }
