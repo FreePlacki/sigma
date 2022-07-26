@@ -1,5 +1,6 @@
 mod error;
 mod expr;
+mod interpreter;
 mod parser;
 mod scanner;
 mod tokens;
@@ -13,16 +14,17 @@ fn run(source: String) -> Result<(), Error> {
     let tokens = scanner.scan()?;
     let mut parser = parser::Parser::new(tokens.to_owned());
     let expressions = parser.parse()?;
-    dbg!(expressions);
+    let interpreter = interpreter::Interpreter::new(expressions.to_owned());
+    interpreter.interpret()?;
 
     Ok(())
 }
 
 fn run_prompt() {
-    println!("Sigma version {}", env!("CARGO_PKG_VERSION").bold());
+    println!("Sigma {}", env!("CARGO_PKG_VERSION").bright_black().bold());
 
     loop {
-        print!("{} ", "Σ".green());
+        print!("{} ", "Σ ❯❯".blue().bold());
         std::io::stdout().flush().unwrap();
 
         let mut buffer = String::new();
