@@ -4,6 +4,7 @@ pub enum ErrorKind {
     UnexpectedCharacter,
     ExpectedExpression,
     MissingRightParen,
+    DivisionByZero,
 }
 
 pub struct Error {
@@ -18,6 +19,7 @@ impl Error {
             ErrorKind::UnexpectedCharacter => "Unexpected character",
             ErrorKind::ExpectedExpression => "Unable to parse expression",
             ErrorKind::MissingRightParen => "Expected ')' after opening '('",
+            ErrorKind::DivisionByZero => "Division by zero!",
         }
     }
 
@@ -40,7 +42,7 @@ impl Error {
         println!(
             "{:>6}{}{}",
             "|".blue().bold(),
-            " ".repeat(self.pos + 1),
+            " ".repeat(self.pos + 2),
             "^".red().bold()
         );
     }

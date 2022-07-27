@@ -128,9 +128,9 @@ impl Scanner {
             _ => {
                 return Err(Error {
                     line: self.line,
-                    pos: self.current,
+                    pos: self.current - 1, // -1 cause we advanced earlier
                     kind: ErrorKind::UnexpectedCharacter,
-                })
+                });
             }
         }
 

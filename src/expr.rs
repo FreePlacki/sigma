@@ -1,7 +1,6 @@
 use crate::tokens::Token;
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub enum Expr {
     Number {
         value: String,
@@ -18,11 +17,11 @@ pub enum Expr {
     Grouping {
         expression: Box<Expr>,
     },
-    Variable {
-        name: Token,
-    },
-    Assign {
-        name: Token,
-        value: Box<Expr>,
-    },
+    // Variable {
+    //     name: Token,
+    // },
+    // Assign {
+    //     name: Token,
+    //     value: Box<Expr>,
+    // },
 }

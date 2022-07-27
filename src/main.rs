@@ -12,6 +12,7 @@ use std::io::Write;
 fn run(source: String) -> Result<(), Error> {
     let mut scanner = scanner::Scanner::new(source);
     let tokens = scanner.scan()?;
+    dbg!(tokens);
     let mut parser = parser::Parser::new(tokens.to_owned());
     let expressions = parser.parse()?;
     let interpreter = interpreter::Interpreter::new(expressions.to_owned());
