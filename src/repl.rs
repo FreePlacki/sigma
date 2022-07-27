@@ -19,22 +19,21 @@ pub fn run_prompt() {
 
     let mut rl = Editor::<()>::new().unwrap(); // TODO add helper
     rl.set_max_history_size(69);
-    rl.load_history("history.txt").unwrap();
+    rl.load_history("history.txt").ok();
 
     let prompt = format!("{} ", "Σ ❯❯".blue().bold());
     loop {
         let source = rl.readline(&prompt);
 
         match source {
-            Ok(line) => {
-                if line.is_empty() {
+            Ok(src) => {
+                if src.is_empty() {
                     continue;
                 }
-                if let Err(e) = run(line.clone()) {
-                    e.print_error(&line);
-                } else {
-                    rl.add_history_entry(line);
+                if let Err(e) = run(src.clone()) {
+                    e.print_error(&src);
                 }
+                rl.add_history_entry(src);
             }
             Err(_) => break,
         }

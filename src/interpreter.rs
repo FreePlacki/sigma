@@ -62,6 +62,7 @@ impl Interpreter {
                     Ok(left / right)
                 }
             }
+            TokenKind::Caret => Ok(left.powf(right)),
             _ => unreachable!(),
         }
     }
