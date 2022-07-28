@@ -38,9 +38,31 @@ impl Interpreter {
         Ok(num.parse().unwrap())
     }
 
-    fn eval_unary(&self, _oper: &Token, right: Expr) -> Result<f64, Error> {
+    fn eval_unary(&self, oper: &Token, right: Expr) -> Result<f64, Error> {
         let num = self.evaluate(&right)?;
-        Ok(-1.0 * num)
+        match oper.kind {
+            TokenKind::Minus => Ok(-1.0 * num),
+            TokenKind::Bang => match self.factorial(num) {
+                Ok(res) => Ok(res),
+                Err(kind) => Err(Error {
+                    line: oper.line,
+                    pos: oper.start,
+                    kind,
+                }),
+            },
+            _ => unreachable!(),
+        }
+    }
+
+    fn factorial(&self, number: f64) -> Result<f64, ErrorKind> {
+        if number < 0.0 {
+            return Err(ErrorKind::FactorialDomain);
+        }
+        let mut res = 1.0;
+        for i in 2..=number.round() as usize {
+            res *= i as f64;
+        }
+        Ok(res)
     }
 
     fn eval_binary(&self, left: Expr, oper: &Token, right: Expr) -> Result<f64, Error> {

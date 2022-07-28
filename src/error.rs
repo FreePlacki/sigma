@@ -5,6 +5,7 @@ pub enum ErrorKind {
     ExpectedExpression,
     MissingRightParen,
     DivisionByZero,
+    FactorialDomain,
 }
 
 pub struct Error {
@@ -20,6 +21,7 @@ impl Error {
             ErrorKind::ExpectedExpression => "Unable to parse expression",
             ErrorKind::MissingRightParen => "Expected ')' after opening '('",
             ErrorKind::DivisionByZero => "Division by zero!",
+            ErrorKind::FactorialDomain => "Factorial is only defined for natural numbers",
         }
     }
 

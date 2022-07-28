@@ -1,5 +1,3 @@
-use std::sync::TryLockResult;
-
 use crate::error::{Error, ErrorKind};
 use crate::expr::Expr;
 use crate::tokens::{Token, TokenKind};
@@ -84,24 +82,9 @@ impl Parser {
     }
 
     fn factor(&mut self) -> Result<Expr, Error> {
-        let mut expr = self.exponent()?;
-
-        while self.consume_match(&[TokenKind::Star, TokenKind::Slash]) {
-            let operator = self.tokens[self.current - 1].to_owned();
-            let right = self.exponent()?;
-            expr = Expr::Binary {
-                left: Box::new(expr),
-                operator,
-                right: Box::new(right),
-            };
-        }
-        Ok(expr)
-    }
-
-    fn exponent(&mut self) -> Result<Expr, Error> {
         let mut expr = self.unary()?;
 
-        while self.consume_match(&[TokenKind::Caret]) {
+        while self.consume_match(&[TokenKind::Star, TokenKind::Slash]) {
             let operator = self.tokens[self.current - 1].to_owned();
             let right = self.unary()?;
             expr = Expr::Binary {
@@ -122,7 +105,35 @@ impl Parser {
                 right: Box::new(right),
             });
         }
-        self.primary()
+        self.exponent()
+    }
+
+    fn exponent(&mut self) -> Result<Expr, Error> {
+        let expr = self.factorial()?;
+
+        if self.consume_match(&[TokenKind::Caret]) {
+            let operator = self.tokens[self.current - 1].to_owned();
+            let right = self.exponent()?;
+            return Ok(Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            });
+        }
+        Ok(expr)
+    }
+
+    fn factorial(&mut self) -> Result<Expr, Error> {
+        let expr = self.primary()?;
+
+        if self.consume_match(&[TokenKind::Bang]) {
+            let operator = self.tokens[self.current - 1].to_owned();
+            return Ok(Expr::Unary {
+                operator,
+                right: Box::new(expr),
+            });
+        }
+        Ok(expr)
     }
 
     fn primary(&mut self) -> Result<Expr, Error> {
