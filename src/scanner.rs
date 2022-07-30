@@ -138,12 +138,17 @@ impl Scanner {
     }
 
     fn advance(&mut self) -> char {
-        let c = self.source.chars().nth(self.current).unwrap();
+        let c = self
+            .source
+            .chars()
+            .nth(self.current)
+            .expect("Cannot advance if current not in [0, len(source)]");
         self.current += 1;
         c
     }
 
     fn peek(&self) -> char {
+        assert!(self.current <= self.source.len());
         if let Some(c) = self.source.chars().nth(self.current) {
             c
         } else {
@@ -152,10 +157,84 @@ impl Scanner {
     }
 
     fn peek_next(&self) -> char {
+        assert!(self.current < self.source.len());
         if let Some(c) = self.source.chars().nth(self.current + 1) {
             c
         } else {
             '\0'
         }
+    }
+}
+
+#[cfg(test)]
+mod scanner_tests {
+    use super::*;
+
+    #[test]
+    fn advance_test() {
+        let source = "12";
+        let mut scanner = Scanner::new(source.into());
+        let a = scanner.advance();
+        let b = scanner.advance();
+        assert_eq!(a, '1');
+        assert_eq!(b, '2');
+        assert_eq!(scanner.current, 2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_advance() {
+        let source = "";
+        let mut scanner = Scanner::new(source.into());
+        let _ = scanner.advance();
+    }
+
+    #[test]
+    fn peek_test() {
+        let source = "12";
+        let mut scanner = Scanner::new(source.into());
+        let a = scanner.peek();
+        let b = scanner.peek();
+        scanner.current += 1;
+        let c = scanner.peek();
+        scanner.current += 1;
+        let d = scanner.peek();
+
+        assert_eq!(a, '1');
+        assert_eq!(b, '1');
+        assert_eq!(c, '2');
+        assert_eq!(d, '\0');
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_peek() {
+        let source = "1";
+        let mut scanner = Scanner::new(source.into());
+        scanner.current = 2;
+        scanner.peek();
+    }
+
+    #[test]
+    fn peek_next_test() {
+        let source = "12";
+        let mut scanner = Scanner::new(source.into());
+        let a = scanner.peek_next();
+        let b = scanner.peek_next();
+        scanner.current += 1;
+        let c = scanner.peek_next();
+
+        assert_eq!(a, '2');
+        assert_eq!(b, '2');
+        assert_eq!(c, '\0');
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_peek_next() {
+        let source = "1";
+        let mut scanner = Scanner::new(source.into());
+        scanner.current = 1;
+        scanner.peek_next();
     }
 }
