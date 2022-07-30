@@ -237,4 +237,21 @@ mod scanner_tests {
         scanner.current = 1;
         scanner.peek_next();
     }
+
+    macro_rules! test_token {
+        ($source:expr; $kind:ident, $line:expr, $start:expr, $lexeme:expr) => {
+            let mut scanner = Scanner::new($source.into());
+            scanner.scan_token().ok();
+
+            assert_eq!(scanner.tokens[0].kind, TokenKind::$kind);
+            assert_eq!(scanner.tokens[0].line, $line);
+            assert_eq!(scanner.tokens[0].start, $start);
+            assert_eq!(scanner.tokens[0].lexeme, $lexeme);
+        };
+    }
+
+    #[test]
+    fn single_char() {
+        test_token!("*"; Star, 0, 0, "*");
+    }
 }
