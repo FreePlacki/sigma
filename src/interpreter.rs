@@ -46,7 +46,7 @@ impl Interpreter {
                 Ok(res) => Ok(res),
                 Err(kind) => Err(Error {
                     line: oper.line,
-                    pos: oper.start,
+                    pos: oper.pos,
                     kind,
                 }),
             },
@@ -77,7 +77,7 @@ impl Interpreter {
                 if right == 0.0 {
                     Err(Error {
                         line: oper.line,
-                        pos: oper.start,
+                        pos: oper.pos,
                         kind: ErrorKind::DivisionByZero,
                     })
                 } else {

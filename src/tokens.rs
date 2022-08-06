@@ -3,7 +3,7 @@ pub struct Token {
     pub kind: TokenKind,
     pub lexeme: String,
     pub line: usize,
-    pub start: usize,
+    pub pos: usize, // position of tokens last char in line
 }
 
 #[allow(dead_code)]

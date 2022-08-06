@@ -3,8 +3,9 @@ use crate::tokens::{Token, TokenKind};
 
 pub struct Scanner {
     source: String,
-    start: usize,
-    current: usize,
+    current: usize, // incremented with every char
+    start: usize,   // start = current when scanning new token
+    pos: usize,     // index in the current line
     line: usize,
     tokens: Vec<Token>,
 }
@@ -15,6 +16,7 @@ impl Scanner {
             source,
             start: 0,
             current: 0,
+            pos: 0,
             line: 0,
             tokens: Vec::<Token>::new(),
         }
@@ -30,7 +32,7 @@ impl Scanner {
             kind: TokenKind::Eof,
             lexeme: "".to_string(),
             line: self.line,
-            start: self.current,
+            pos: self.pos,
         });
         Ok(&self.tokens)
     }
@@ -43,7 +45,7 @@ impl Scanner {
                     kind: $kind,
                     lexeme: $lexeme,
                     line: self.line,
-                    start: self.start,
+                    pos: self.pos - 1,
                 })
             };
             ($kind: expr) => {
@@ -56,7 +58,7 @@ impl Scanner {
                         .unwrap()
                         .to_string(),
                     line: self.line,
-                    start: self.start,
+                    pos: self.pos - 1,
                 })
             };
         }
@@ -95,7 +97,7 @@ impl Scanner {
                 } else {
                     return Err(Error {
                         line: self.line,
-                        pos: self.current,
+                        pos: self.pos - 1,
                         kind: ErrorKind::UnexpectedCharacter,
                     });
                 }
@@ -108,11 +110,15 @@ impl Scanner {
                 // consume '\n'
                 self.advance();
                 self.line += 1;
+                self.pos = 0;
             }
 
             '\t' => add_token!(TokenKind::Tab),
             ' ' | '\r' => {}
-            '\n' => self.line += 1,
+            '\n' => {
+                self.line += 1;
+                self.pos = 0
+            }
 
             'a'..='z' | 'A'..='Z' => {
                 while self.peek().is_ascii_alphanumeric() || self.peek() == '_' {
@@ -128,7 +134,7 @@ impl Scanner {
             _ => {
                 return Err(Error {
                     line: self.line,
-                    pos: self.current - 1, // -1 cause we advanced earlier
+                    pos: self.pos - 1, // -1 cause we advanced earlier
                     kind: ErrorKind::UnexpectedCharacter,
                 });
             }
@@ -144,6 +150,7 @@ impl Scanner {
             .nth(self.current)
             .expect("Cannot advance if current not in [0, len(source)]");
         self.current += 1;
+        self.pos += 1;
         c
     }
 
@@ -239,19 +246,46 @@ mod scanner_tests {
     }
 
     macro_rules! test_token {
-        ($source:expr; $kind:ident, $line:expr, $start:expr, $lexeme:expr) => {
+        ($source:expr; $kind:ident, $line:expr, $pos:expr, $lexeme:expr) => {
             let mut scanner = Scanner::new($source.into());
-            scanner.scan_token().ok();
+            scanner.scan().ok();
 
-            assert_eq!(scanner.tokens[0].kind, TokenKind::$kind);
-            assert_eq!(scanner.tokens[0].line, $line);
-            assert_eq!(scanner.tokens[0].start, $start);
-            assert_eq!(scanner.tokens[0].lexeme, $lexeme);
+            assert_eq!(scanner.tokens[0].kind, TokenKind::$kind, "kind");
+            assert_eq!(scanner.tokens[0].line, $line, "line");
+            assert_eq!(scanner.tokens[0].pos, $pos, "pos");
+            assert_eq!(scanner.tokens[0].lexeme, $lexeme, "lexeme");
         };
     }
 
     #[test]
     fn single_char() {
         test_token!("*"; Star, 0, 0, "*");
+    }
+
+    #[test]
+    fn comment() {
+        test_token!("# abc 123 ~ a\na"; Identifier, 1, 0, "a");
+    }
+
+    #[test]
+    fn number() {
+        test_token!("123"; Number, 0, 2, "123");
+        test_token!("1.3121"; Number, 0, 5, "1.3121");
+        test_token!("3_321"; Number, 0, 4, "3_321");
+        test_token!("3_3_21.3"; Number, 0, 7, "3_3_21.3");
+        test_token!(".33_2"; Number, 0, 4, ".33_2");
+    }
+
+    #[test]
+    #[should_panic]
+    fn invalid_number() {
+        // TODO implement Error token instead of panic
+        test_token!("23.312.1"; Number, 0, 2, "");
+    }
+
+    #[test]
+    fn identifier() {
+        test_token!("abc"; Identifier, 0, 2, "abc");
+        test_token!("a_bc"; Identifier, 0, 3, "a_bc");
     }
 }
