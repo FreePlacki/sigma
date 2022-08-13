@@ -6,6 +6,7 @@ pub enum ErrorKind {
     MissingRightParen,
     DivisionByZero,
     FactorialDomain,
+    InvalidAssignment,
 }
 
 pub struct Error {
@@ -22,6 +23,7 @@ impl Error {
             ErrorKind::MissingRightParen => "Expected ')' after opening '('",
             ErrorKind::DivisionByZero => "Division by zero!",
             ErrorKind::FactorialDomain => "Factorial is only defined for natural numbers",
+            ErrorKind::InvalidAssignment => "Can only assign values to variables",
         }
     }
 

@@ -17,11 +17,11 @@ pub enum Expr {
     Grouping {
         expression: Box<Expr>,
     },
-    // Variable {
-    //     name: Token,
-    // },
-    // Assign {
-    //     name: Token,
-    //     value: Box<Expr>,
-    // },
+    Variable {
+        name: Token,
+    },
+    Assign {
+        name: Token,
+        value: Box<Expr>,
+    },
 }

@@ -62,7 +62,27 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, Error> {
-        self.term()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, Error> {
+        let expr = self.term()?;
+
+        if self.consume_match(&[TokenKind::Equals]) {
+            let value = Box::new(self.term()?);
+
+            return if let Expr::Variable { name } = expr {
+                Ok(Expr::Assign { name, value })
+            } else {
+                Err(Error {
+                    line: self.tokens[self.current].line,
+                    pos: self.current - 1,
+                    kind: ErrorKind::InvalidAssignment,
+                })
+            };
+        }
+
+        Ok(expr)
     }
 
     fn term(&mut self) -> Result<Expr, Error> {
@@ -137,22 +157,22 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, Error> {
-        let token = &self.tokens[self.current];
-        match token.kind {
-            TokenKind::Number => {
-                self.advance();
-                Ok(Expr::Number {
-                    value: self.tokens[self.current - 1].lexeme.to_owned(),
-                })
-            }
+        self.advance();
+
+        match self.tokens[self.current - 1].kind {
+            TokenKind::Number => Ok(Expr::Number {
+                value: self.tokens[self.current - 1].lexeme.to_owned(),
+            }),
             TokenKind::LeftParen => {
-                self.advance();
                 let expression = Box::new(self.expression()?);
                 self.consume(TokenKind::RightParen, ErrorKind::MissingRightParen)?;
                 Ok(Expr::Grouping { expression })
             }
+            TokenKind::Identifier => Ok(Expr::Variable {
+                name: self.tokens[self.current].clone(),
+            }),
             _ => Err(Error {
-                line: token.line,
+                line: self.tokens[self.current].line,
                 pos: self.current,
                 kind: ErrorKind::ExpectedExpression,
             }),

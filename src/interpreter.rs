@@ -29,6 +29,12 @@ impl Interpreter {
                 right,
             } => self.eval_binary(*left.to_owned(), operator, *right.to_owned()),
             Expr::Grouping { expression } => self.evaluate(expression),
+            Expr::Variable { name } => {
+                Ok(1.0) // TODO
+            }
+            Expr::Assign { name, value } => {
+                Ok(1.0) // TODO
+            }
         }
     }
 
