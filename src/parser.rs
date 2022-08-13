@@ -169,10 +169,10 @@ impl Parser {
                 Ok(Expr::Grouping { expression })
             }
             TokenKind::Identifier => Ok(Expr::Variable {
-                name: self.tokens[self.current].clone(),
+                name: self.tokens[self.current - 1].clone(),
             }),
             _ => Err(Error {
-                line: self.tokens[self.current].line,
+                line: self.tokens[self.current - 1].line,
                 pos: self.current,
                 kind: ErrorKind::ExpectedExpression,
             }),

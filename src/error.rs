@@ -7,6 +7,7 @@ pub enum ErrorKind {
     DivisionByZero,
     FactorialDomain,
     InvalidAssignment,
+    UndefinedVariable,
 }
 
 pub struct Error {
@@ -24,6 +25,7 @@ impl Error {
             ErrorKind::DivisionByZero => "Division by zero!",
             ErrorKind::FactorialDomain => "Factorial is only defined for natural numbers",
             ErrorKind::InvalidAssignment => "Can only assign values to variables",
+            ErrorKind::UndefinedVariable => "Undefined variable",
         }
     }
 

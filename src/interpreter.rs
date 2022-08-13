@@ -1,25 +1,33 @@
+use std::collections::HashMap;
+
 use crate::error::{Error, ErrorKind};
 use crate::expr::Expr;
 use crate::tokens::{Token, TokenKind};
 
+pub type Environment = HashMap<String, Expr>;
+
 pub struct Interpreter {
     expressions: Vec<Expr>,
+    environment: Environment,
 }
 
 impl Interpreter {
-    pub fn new(expressions: Vec<Expr>) -> Self {
-        Self { expressions }
+    pub fn new(expressions: Vec<Expr>, environment: Environment) -> Self {
+        Self {
+            expressions,
+            environment,
+        }
     }
 
-    pub fn interpret(&self) -> Result<(), Error> {
-        for expr in &self.expressions {
+    pub fn interpret(&mut self) -> Result<Environment, Error> {
+        for expr in &self.expressions.clone() {
             let res = self.evaluate(expr)?;
             println!("{}", res);
         }
-        Ok(())
+        Ok(self.environment.clone())
     }
 
-    fn evaluate(&self, expr: &Expr) -> Result<f64, Error> {
+    fn evaluate(&mut self, expr: &Expr) -> Result<f64, Error> {
         match expr {
             Expr::Number { value } => self.eval_number(value),
             Expr::Unary { operator, right } => self.eval_unary(operator, *right.to_owned()),
@@ -29,12 +37,8 @@ impl Interpreter {
                 right,
             } => self.eval_binary(*left.to_owned(), operator, *right.to_owned()),
             Expr::Grouping { expression } => self.evaluate(expression),
-            Expr::Variable { name } => {
-                Ok(1.0) // TODO
-            }
-            Expr::Assign { name, value } => {
-                Ok(1.0) // TODO
-            }
+            Expr::Variable { name } => self.eval_variable(name.to_owned()),
+            Expr::Assign { name, value } => self.eval_assign(name.to_owned(), *value.to_owned()),
         }
     }
 
@@ -44,7 +48,7 @@ impl Interpreter {
         Ok(num.parse().unwrap())
     }
 
-    fn eval_unary(&self, oper: &Token, right: Expr) -> Result<f64, Error> {
+    fn eval_unary(&mut self, oper: &Token, right: Expr) -> Result<f64, Error> {
         let num = self.evaluate(&right)?;
         match oper.kind {
             TokenKind::Minus => Ok(-1.0 * num),
@@ -71,7 +75,7 @@ impl Interpreter {
         Ok(res)
     }
 
-    fn eval_binary(&self, left: Expr, oper: &Token, right: Expr) -> Result<f64, Error> {
+    fn eval_binary(&mut self, left: Expr, oper: &Token, right: Expr) -> Result<f64, Error> {
         let left = self.evaluate(&left)?;
         let right = self.evaluate(&right)?;
 
@@ -93,5 +97,22 @@ impl Interpreter {
             TokenKind::Caret => Ok(left.powf(right)),
             _ => unreachable!(),
         }
+    }
+
+    fn eval_variable(&mut self, name: Token) -> Result<f64, Error> {
+        if let Some(expr) = self.environment.get(&name.lexeme) {
+            self.evaluate(&expr.clone())
+        } else {
+            Err(Error {
+                line: name.line,
+                pos: name.pos,
+                kind: ErrorKind::UndefinedVariable,
+            })
+        }
+    }
+
+    fn eval_assign(&mut self, name: Token, value: Expr) -> Result<f64, Error> {
+        self.environment.insert(name.lexeme, value.clone());
+        self.evaluate(&value)
     }
 }

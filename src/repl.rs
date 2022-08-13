@@ -1,17 +1,20 @@
 use colored::Colorize;
 use rustyline::{config::Configurer, Editor};
 
-use crate::{error::Error, interpreter, parser, scanner};
+use crate::{
+    error::Error,
+    interpreter::{self, Environment},
+    parser, scanner,
+};
 
-pub fn run(source: String) -> Result<(), Error> {
+pub fn run(source: String, environment: Environment) -> Result<Environment, Error> {
     let mut scanner = scanner::Scanner::new(source);
     let tokens = scanner.scan()?;
     let mut parser = parser::Parser::new(tokens.to_owned());
     let expressions = parser.parse()?;
-    let interpreter = interpreter::Interpreter::new(expressions.to_owned());
-    interpreter.interpret()?;
+    let mut interpreter = interpreter::Interpreter::new(expressions.to_owned(), environment);
 
-    Ok(())
+    interpreter.interpret()
 }
 
 pub fn run_prompt() {
@@ -22,6 +25,8 @@ pub fn run_prompt() {
     rl.load_history("history.txt").ok();
 
     let prompt = format!("{} ", "Σ ❯❯".blue().bold());
+
+    let mut environment = Environment::new();
     loop {
         let source = rl.readline(&prompt);
 
@@ -30,8 +35,9 @@ pub fn run_prompt() {
                 if src.is_empty() {
                     continue;
                 }
-                if let Err(e) = run(src.clone()) {
-                    e.print_error(&src);
+                match run(src.clone(), environment.clone()) {
+                    Ok(en) => environment = en,
+                    Err(er) => er.print_error(&src),
                 }
                 rl.add_history_entry(src);
             }
