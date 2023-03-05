@@ -2,11 +2,12 @@
 
 ### Variable declaration
 ```
-m = 5.1    kg
 abcd_123a = -1
 ```
-
-Units at the end, separated by one tab.
+Units after ":"
+```
+m: kg = 5.2
+```
 
 ---
 
@@ -30,7 +31,7 @@ a*b # >> 2
 ### Operations
 `+` addition
 
-`-` substraction
+`-` subtraction
 
 `*` multiplication
 
