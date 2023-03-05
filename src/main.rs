@@ -5,6 +5,7 @@ mod parser;
 mod repl;
 mod scanner;
 mod tokens;
+mod value;
 
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();

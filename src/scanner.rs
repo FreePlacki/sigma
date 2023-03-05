@@ -68,6 +68,8 @@ impl Scanner {
         match c {
             '(' => add_token!(TokenKind::LeftParen),
             ')' => add_token!(TokenKind::RightParen),
+            '[' => add_token!(TokenKind::LeftBracket),
+            ']' => add_token!(TokenKind::RightBracket),
             '-' => add_token!(TokenKind::Minus),
             '+' => add_token!(TokenKind::Plus),
             '*' => add_token!(TokenKind::Star),

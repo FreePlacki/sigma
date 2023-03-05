@@ -160,9 +160,24 @@ impl Parser {
         self.advance();
 
         match self.tokens[self.current - 1].kind {
-            TokenKind::Number => Ok(Expr::Number {
-                value: self.tokens[self.current - 1].lexeme.to_owned(),
-            }),
+            TokenKind::Number => {
+                let number_pos = self.current - 1;
+                let dimension = if self.tokens[self.current].kind == TokenKind::LeftBracket {
+                    self.advance();
+                    let expr = Box::new(self.expression()?);
+                    self.consume(TokenKind::RightBracket, ErrorKind::MissingRightBracket)?;
+                    Some(expr)
+                } else {
+                    None
+                };
+                dbg!(&dimension);
+                dbg!(&self.tokens[number_pos].lexeme.to_owned());
+
+                Ok(Expr::Number {
+                    value: self.tokens[number_pos].lexeme.to_owned(),
+                    dimension,
+                })
+            }
             TokenKind::LeftParen => {
                 let expression = Box::new(self.expression()?);
                 self.consume(TokenKind::RightParen, ErrorKind::MissingRightParen)?;

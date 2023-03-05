@@ -4,9 +4,13 @@ pub enum ErrorKind {
     UnexpectedCharacter,
     ExpectedExpression,
     MissingRightParen,
+    MissingRightBracket,
     DivisionByZero,
     FactorialDomain,
+    FactorialDimension,
     InvalidAssignment,
+    InvalidUnitsAdd,
+    InvalidUnitsSub,
     UndefinedVariable,
 }
 
@@ -22,9 +26,13 @@ impl Error {
             ErrorKind::UnexpectedCharacter => "Unexpected character",
             ErrorKind::ExpectedExpression => "Unable to parse expression",
             ErrorKind::MissingRightParen => "Expected ')' after opening '('",
+            ErrorKind::MissingRightBracket => "Expected ']' after opening '['",
             ErrorKind::DivisionByZero => "Division by zero!",
             ErrorKind::FactorialDomain => "Factorial is only defined for natural numbers",
+            ErrorKind::FactorialDimension => "Can only take factorial of dimensionless values",
             ErrorKind::InvalidAssignment => "Can only assign values to variables",
+            ErrorKind::InvalidUnitsAdd => "Cannot add values with different units",
+            ErrorKind::InvalidUnitsSub => "Cannot subtract values with different units",
             ErrorKind::UndefinedVariable => "Undefined variable",
         }
     }

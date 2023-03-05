@@ -12,6 +12,8 @@ pub enum TokenKind {
     // Single-character tokens.
     LeftParen,
     RightParen,
+    LeftBracket,
+    RightBracket,
     Tab,
     Minus,
     Plus,

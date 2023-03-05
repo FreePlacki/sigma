@@ -4,6 +4,7 @@ use crate::tokens::Token;
 pub enum Expr {
     Number {
         value: String,
+        dimension: Option<Box<Expr>>,
     },
     Unary {
         operator: Token,
