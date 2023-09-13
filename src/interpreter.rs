@@ -74,7 +74,7 @@ impl Interpreter {
 
         match oper.kind {
             TokenKind::Plus => {
-                if !left.check(Some(&right)) {
+                if !left.check(&right) {
                     return Err(Error {
                         line: oper.line,
                         pos: oper.pos,
@@ -84,7 +84,7 @@ impl Interpreter {
                 Ok(left)
             }
             TokenKind::Minus => {
-                if !left.check(Some(&right)) {
+                if !left.check(&right) {
                     return Err(Error {
                         line: oper.line,
                         pos: oper.pos,
@@ -93,8 +93,8 @@ impl Interpreter {
                 }
                 Ok(left)
             }
-            TokenKind::Star => Ok(left.mul_dim(Some(&right))),
-            TokenKind::Slash => Ok(left.div_dim(Some(&right))),
+            TokenKind::Star => Ok(left.mul_dim(&right)),
+            TokenKind::Slash => Ok(left.div_dim(&right)),
             TokenKind::Caret => {
                 // TODO has to be done differently to work with numbers
                 // idea: move it before right to parse right as a number
@@ -150,8 +150,10 @@ impl Interpreter {
 
         match oper.kind {
             TokenKind::Plus => {
-                if let Some(dim) = &left.dimension {
-                    if !dim.check(right.dimension.as_ref()) {
+                // rn only checking if both have some dim, consider throwing error when only one
+                // has a dimension (ex: is 1 [kg] + 2 valid?)
+                if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
+                    if !left_dim.check(right_dim) {
                         // TODO make a macro for errors
                         return Err(Error {
                             line: oper.line,
@@ -166,8 +168,8 @@ impl Interpreter {
                 })
             }
             TokenKind::Minus => {
-                if let Some(dim) = &left.dimension {
-                    if !dim.check(right.dimension.as_ref()) {
+                if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
+                    if !left_dim.check(right_dim) {
                         return Err(Error {
                             line: oper.line,
                             pos: oper.pos,
@@ -182,9 +184,12 @@ impl Interpreter {
             }
             TokenKind::Star => {
                 let number = left.number * right.number;
-                let dimension = left
-                    .dimension
-                    .map(|mut dim| dim.mul_dim(right.dimension.as_ref()));
+                let dimension = match (left.dimension, right.dimension) {
+                    (Some(left_dim), Some(right_dim)) => Some(left_dim.mul_dim(&right_dim)),
+                    (Some(left_dim), _) => Some(left_dim),
+                    (_, Some(right_dim)) => Some(right_dim),
+                    _ => None,
+                };
 
                 Ok(Value { number, dimension })
             }
@@ -197,15 +202,18 @@ impl Interpreter {
                     })
                 } else {
                     let number = left.number / right.number;
-                    let dimension = left
-                        .dimension
-                        .map(|mut dim| dim.div_dim(right.dimension.as_ref()));
+                    let dimension = match (left.dimension, right.dimension) {
+                        (Some(left_dim), Some(right_dim)) => Some(left_dim.div_dim(&right_dim)),
+                        (Some(left_dim), _) => Some(left_dim),
+                        (_, Some(right_dim)) => Some(right_dim),
+                        _ => None,
+                    };
 
                     Ok(Value { number, dimension })
                 }
             }
             TokenKind::Caret => {
-                let dimension = left.dimension.map(|mut dim| dim.pow_dim(right.number));
+                let dimension = left.dimension.map(|dim| dim.pow_dim(right.number));
 
                 Ok(Value {
                     number: left.number.powf(right.number),

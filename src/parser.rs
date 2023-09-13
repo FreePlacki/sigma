@@ -170,8 +170,8 @@ impl Parser {
                 } else {
                     None
                 };
-                dbg!(&dimension);
-                dbg!(&self.tokens[number_pos].lexeme.to_owned());
+                // dbg!(&dimension);
+                // dbg!(&self.tokens[number_pos].lexeme.to_owned());
 
                 Ok(Expr::Number {
                     value: self.tokens[number_pos].lexeme.to_owned(),
