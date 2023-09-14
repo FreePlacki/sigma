@@ -23,7 +23,11 @@ impl Interpreter {
     pub fn interpret(&mut self) -> Result<Environment, Error> {
         for expr in &self.expressions.clone() {
             let res = self.evaluate(expr)?;
+            if let Some(dim) = res.dimension {
+                println!("{} [{}]", res.number, dim.lexeme);
+            } else {
             println!("{}", res.number);
+            }
         }
         Ok(self.environment.clone())
     }
