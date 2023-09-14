@@ -40,7 +40,7 @@ impl Unit {
         if float_eq(self.exponent, 1.0) {
             self.name.clone()
         } else {
-            String::from(format!("{}^{}", self.name, self.exponent))
+            format!("{}^{}", self.name, self.exponent)
         }
     }
 }

@@ -85,11 +85,32 @@ impl Scanner {
                     self.advance();
                 }
 
+                if self.peek() == 'e' {
+                    self.advance();
+                    if self.peek() == '-' {
+                        self.advance();
+                    }
+
+                    while self.peek().is_ascii_digit() {
+                        self.advance();
+                    }
+                }
+
                 if self.peek() == '.' && self.peek_next().is_ascii_digit() {
                     self.advance();
 
                     while self.peek().is_ascii_digit() {
                         self.advance();
+                    }
+                    if self.peek() == 'e' {
+                        self.advance();
+                        if self.peek() == '-' {
+                            self.advance();
+                        }
+
+                        while self.peek().is_ascii_digit() {
+                            self.advance();
+                        }
                     }
                 }
 
@@ -281,7 +302,9 @@ mod scanner_tests {
     #[test]
     #[should_panic]
     fn invalid_number() {
-        // TODO implement Error token instead of panic
+        // TODO: implement Error token instead of panic
+        // rn it parses it as two numbers
+        // That's because the scanner starts a new number when it sees '.'
         test_token!("23.312.1"; Number, 0, 2, "");
     }
 

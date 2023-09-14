@@ -20,7 +20,7 @@ pub fn run(source: String, environment: Environment) -> Result<Environment, Erro
 pub fn run_prompt() {
     println!("Sigma {}", env!("CARGO_PKG_VERSION").bright_black().bold());
 
-    let mut rl = Editor::<()>::new().unwrap(); // TODO add helper
+    let mut rl = Editor::<()>::new().unwrap(); // TODO: add helper
     rl.set_max_history_size(69);
     rl.load_history("history.txt").ok();
 

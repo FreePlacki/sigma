@@ -23,6 +23,8 @@ impl Interpreter {
     pub fn interpret(&mut self) -> Result<Environment, Error> {
         for expr in &self.expressions.clone() {
             let res = self.evaluate(expr)?;
+            // TODO: fix the formatting with float errors
+            // https://stackoverflow.com/questions/28655362/how-does-one-round-a-floating-point-number-to-a-specified-number-of-digits
             if let Some(dim) = res.dimension {
                 println!("{} [{}]", res.number, dim.lexeme);
             } else {
@@ -48,8 +50,15 @@ impl Interpreter {
     }
 
     fn eval_number(&mut self, value: &str, dimension: Option<Box<Expr>>) -> Result<Value, Error> {
-        // TODO support XeY
-        let number = value.replace(&['_', ','], "").parse().unwrap();
+        // TODO: support XeY
+        let number = value.replace(['_', ','], "");
+        let mut s = number.split('e');
+        let mut number = s.next().unwrap().parse().unwrap();
+        if let Some(exp) = s.next() {
+            let exp = exp.parse().unwrap();
+            number *= 10f64.powi(exp);
+        }
+        
         let dimension = if let Some(dim) = dimension {
             Some(self.eval_dimension(&dim)?)
         } else {
@@ -156,7 +165,7 @@ impl Interpreter {
                 // has a dimension (ex: is 1 [kg] + 2 valid?)
                 if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
                     if !left_dim.check(right_dim) {
-                        // TODO make a macro for errors
+                        // TODO: make a macro for errors
                         return Err(Error {
                             line: oper.line,
                             pos: oper.pos,
