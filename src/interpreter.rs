@@ -26,7 +26,7 @@ impl Interpreter {
             if let Some(dim) = res.dimension {
                 println!("{} [{}]", res.number, dim.lexeme);
             } else {
-            println!("{}", res.number);
+                println!("{}", res.number);
             }
         }
         Ok(self.environment.clone())
@@ -47,7 +47,7 @@ impl Interpreter {
         }
     }
 
-    fn eval_number(&self, value: &str, dimension: Option<Box<Expr>>) -> Result<Value, Error> {
+    fn eval_number(&mut self, value: &str, dimension: Option<Box<Expr>>) -> Result<Value, Error> {
         // TODO support XeY
         let number = value.replace(&['_', ','], "").parse().unwrap();
         let dimension = if let Some(dim) = dimension {
@@ -58,9 +58,8 @@ impl Interpreter {
         Ok(Value { number, dimension })
     }
 
-    fn eval_dimension(&self, dimension: &Expr) -> Result<Dimension, Error> {
+    fn eval_dimension(&mut self, dimension: &Expr) -> Result<Dimension, Error> {
         match dimension {
-            // TODO Numbers for exponents
             Expr::Binary {
                 left,
                 operator,
@@ -72,8 +71,12 @@ impl Interpreter {
         }
     }
 
-    fn eval_binary_dim(&self, left: Expr, oper: &Token, right: Expr) -> Result<Dimension, Error> {
-        let mut left = self.eval_dimension(&left)?;
+    fn eval_binary_dim(&mut self, left: Expr, oper: &Token, right: Expr) -> Result<Dimension, Error> {
+        let left = self.eval_dimension(&left)?;
+        if oper.kind == TokenKind::Caret {
+            let right = self.evaluate(&right)?;
+            return Ok(left.pow_dim(right.number));
+        }
         let right = self.eval_dimension(&right)?;
 
         match oper.kind {
@@ -99,11 +102,6 @@ impl Interpreter {
             }
             TokenKind::Star => Ok(left.mul_dim(&right)),
             TokenKind::Slash => Ok(left.div_dim(&right)),
-            TokenKind::Caret => {
-                // TODO has to be done differently to work with numbers
-                // idea: move it before right to parse right as a number
-                todo!()
-            }
             _ => unreachable!(),
         }
     }
