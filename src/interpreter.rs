@@ -104,13 +104,13 @@ impl Interpreter {
 
         match oper.kind {
             TokenKind::Plus => {
-                if !left.check(&right) {
+                if !left.check(Some(&right)) {
                     return Err(gen_error!(ErrorKind::InvalidUnitsAdd, oper));
                 }
                 Ok(left)
             }
             TokenKind::Minus => {
-                if !left.check(&right) {
+                if !left.check(Some(&right)) {
                     return Err(gen_error!(ErrorKind::InvalidUnitsSub, oper));
                 }
                 Ok(left)
@@ -144,8 +144,10 @@ impl Interpreter {
         if value.number < 0.0 {
             return Err(ErrorKind::FactorialDomain);
         }
-        if value.dimension.is_some() {
-            return Err(ErrorKind::FactorialDimension);
+        if let Some(dim) = value.dimension {
+            if !dim.is_dimensionless() {
+                return Err(ErrorKind::FactorialDimension);
+            }
         }
         let mut res = 1.0;
         for i in 2..=value.number.round() as usize {
@@ -161,32 +163,52 @@ impl Interpreter {
         let left = self.evaluate(&left)?;
         let right = self.evaluate(&right)?;
 
+        let check_left = left.dimension.is_some()
+            && left
+                .dimension
+                .as_ref()
+                .unwrap()
+                .check(right.dimension.as_ref());
+        let check_right = right.dimension.is_some()
+            && right
+                .dimension
+                .as_ref()
+                .unwrap()
+                .check(left.dimension.as_ref());
+        let both_none = left.dimension.is_none() && right.dimension.is_none();
+
         match oper.kind {
             TokenKind::Plus => {
-                // rn only checking if both have some dim, consider throwing error when only one
-                // has a dimension (ex: is 1 [kg] + 2 valid?)
-                dbg!(&left.dimension);
-                dbg!(&right.dimension);
-                if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
-                    if !left_dim.check(right_dim) {
-                        return Err(gen_error!(ErrorKind::InvalidUnitsAdd, oper));
-                    }
+                let number = left.number + right.number;
+
+                if check_left || check_right || both_none {
+                    Ok(Value {
+                        number,
+                        dimension: if check_left {
+                            left.dimension
+                        } else {
+                            right.dimension
+                        },
+                    })
+                } else {
+                    Err(gen_error!(ErrorKind::InvalidUnitsAdd, oper))
                 }
-                Ok(Value {
-                    number: left.number + right.number,
-                    dimension: left.dimension,
-                })
             }
             TokenKind::Minus => {
-                if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
-                    if !left_dim.check(right_dim) {
-                        return Err(gen_error!(ErrorKind::InvalidUnitsSub, oper));
-                    }
+                let number = left.number - right.number;
+
+                if check_left || check_right || both_none {
+                    Ok(Value {
+                        number,
+                        dimension: if check_left {
+                            left.dimension
+                        } else {
+                            right.dimension
+                        },
+                    })
+                } else {
+                    Err(gen_error!(ErrorKind::InvalidUnitsSub, oper))
                 }
-                Ok(Value {
-                    number: left.number - right.number,
-                    dimension: left.dimension,
-                })
             }
             TokenKind::Star => {
                 let number = left.number * right.number;
@@ -201,26 +223,40 @@ impl Interpreter {
             }
             TokenKind::Slash => {
                 if right.number == 0.0 {
-                    Err(gen_error!(ErrorKind::DivisionByZero, oper))
-                } else {
-                    let number = left.number / right.number;
-                    let dimension = match (left.dimension, right.dimension) {
-                        (Some(left_dim), Some(right_dim)) => Some(left_dim.div_dim(&right_dim)),
-                        (Some(left_dim), _) => Some(left_dim),
-                        (_, Some(right_dim)) => Some(right_dim),
-                        _ => None,
-                    };
-
-                    Ok(Value { number, dimension })
+                    return Err(gen_error!(ErrorKind::DivisionByZero, oper));
                 }
+                let number = left.number / right.number;
+                let dimension = match (left.dimension, right.dimension) {
+                    (Some(left_dim), Some(right_dim)) => Some(left_dim.div_dim(&right_dim)),
+                    (Some(left_dim), _) => Some(left_dim),
+                    (_, Some(right_dim)) => Some(right_dim.pow_dim(-1.0)),
+                    _ => None,
+                };
+
+                Ok(Value { number, dimension })
             }
             TokenKind::Caret => {
-                let dimension = left.dimension.map(|dim| dim.pow_dim(right.number));
-
-                Ok(Value {
-                    number: left.number.powf(right.number),
-                    dimension,
-                })
+                let number = left.number.powf(right.number);
+                match (&left.dimension, &right.dimension) {
+                    (_, Some(right_dim)) => {
+                        if !right_dim.is_dimensionless() {
+                            Err(gen_error!(ErrorKind::InvalidUnitsPow, oper))
+                        } else {
+                            Ok(Value {
+                                number,
+                                dimension: left.dimension,
+                            })
+                        }
+                    }
+                    (Some(left_dim), None) => {
+                        let dimension = Some(left_dim.pow_dim(right.number));
+                        Ok(Value { number, dimension })
+                    }
+                    _ => Ok(Value {
+                        number,
+                        dimension: None,
+                    }),
+                }
             }
             _ => unreachable!(),
         }

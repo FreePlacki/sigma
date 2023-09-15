@@ -11,6 +11,7 @@ pub enum ErrorKind {
     InvalidAssignment,
     InvalidUnitsAdd,
     InvalidUnitsSub,
+    InvalidUnitsPow,
     UndefinedVariable,
 }
 
@@ -33,6 +34,7 @@ impl Error {
             ErrorKind::InvalidAssignment => "Can only assign values to variables",
             ErrorKind::InvalidUnitsAdd => "Cannot add values with different units",
             ErrorKind::InvalidUnitsSub => "Cannot subtract values with different units",
+            ErrorKind::InvalidUnitsPow => "Can only raise to a power of dimensionless values",
             ErrorKind::UndefinedVariable => "Undefined variable",
         }
     }
