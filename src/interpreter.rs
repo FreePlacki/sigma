@@ -38,10 +38,15 @@ impl Interpreter {
                 Expr::Variable { name } if !is_repl => print!("{} = ", name.lexeme),
                 _ => {}
             }
-            if let Some(dim) = res.dimension {
-                println!("{} [{}]", res.number, dim.lexeme);
+            let formatted_num = if res.number.abs() > 1e4 || res.number.abs() < 1e-4 {
+                format!("{:e}", res.number)
             } else {
-                println!("{}", res.number);
+                res.number.to_string()
+            };
+            if let Some(dim) = res.dimension {
+                println!("{formatted_num} [{}]", dim.lexeme);
+            } else {
+                println!("{formatted_num}");
             }
         }
         Ok(self.environment.clone())

@@ -1,48 +1,9 @@
+use crate::unit::{float_eq, Unit};
+
 #[derive(Clone)]
 pub struct Value {
     pub number: f64,
     pub dimension: Option<Dimension>,
-}
-
-#[derive(Debug, Clone)]
-struct Unit {
-    name: String,
-    exponent: f64,
-}
-
-fn float_eq(a: f64, b: f64) -> bool {
-    let d = 10f64.powi(-5);
-    (a - b).abs() < d
-}
-
-impl PartialEq for Unit {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name && float_eq(self.exponent, other.exponent)
-    }
-}
-
-impl Unit {
-    fn to_si(&self) -> Vec<Unit> {
-        let res = match self.name.as_str() {
-            "m" | "s" | "kg" | "A" | "K" | "mol" | "cd" => vec![(self.name.clone(), 1.0)],
-            "Hz" => vec![("s".into(), -1.0)],
-            _ => vec![(self.name.clone(), 1.0)],
-        };
-        res.into_iter()
-            .map(|(name, exp)| Unit {
-                name,
-                exponent: self.exponent * exp,
-            })
-            .collect()
-    }
-
-    fn get_lexeme(&self) -> String {
-        if float_eq(self.exponent, 1.0) {
-            self.name.clone()
-        } else {
-            format!("{}^{}", self.name, self.exponent)
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +22,7 @@ impl Dimension {
     }
 
     fn fold_units(units: Vec<Unit>) -> Vec<Unit> {
+        // TODO: remove units with exp == 0
         let res: Vec<Unit> = units.iter().fold(vec![], |mut acc, unit| {
             if let Some(entry) = acc.iter_mut().find(|u| u.name == unit.name) {
                 entry.exponent += unit.exponent;
