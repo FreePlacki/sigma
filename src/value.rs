@@ -12,7 +12,7 @@ struct Unit {
 
 fn float_eq(a: f64, b: f64) -> bool {
     let d = 10f64.powi(-5);
-    a - b < d
+    (a - b).abs() < d
 }
 
 impl PartialEq for Unit {

@@ -12,6 +12,16 @@ pub struct Interpreter {
     environment: Environment,
 }
 
+macro_rules! gen_error {
+    ($kind:expr, $oper:expr) => {
+        Error {
+            line: $oper.line,
+            pos: $oper.pos,
+            kind: $kind,
+        }
+    };
+}
+
 impl Interpreter {
     pub fn new(expressions: Vec<Expr>, environment: Environment) -> Self {
         Self {
@@ -50,7 +60,6 @@ impl Interpreter {
     }
 
     fn eval_number(&mut self, value: &str, dimension: Option<Box<Expr>>) -> Result<Value, Error> {
-        // TODO: support XeY
         let number = value.replace(['_', ','], "");
         let mut s = number.split('e');
         let mut number = s.next().unwrap().parse().unwrap();
@@ -58,7 +67,7 @@ impl Interpreter {
             let exp = exp.parse().unwrap();
             number *= 10f64.powi(exp);
         }
-        
+
         let dimension = if let Some(dim) = dimension {
             Some(self.eval_dimension(&dim)?)
         } else {
@@ -80,7 +89,12 @@ impl Interpreter {
         }
     }
 
-    fn eval_binary_dim(&mut self, left: Expr, oper: &Token, right: Expr) -> Result<Dimension, Error> {
+    fn eval_binary_dim(
+        &mut self,
+        left: Expr,
+        oper: &Token,
+        right: Expr,
+    ) -> Result<Dimension, Error> {
         let left = self.eval_dimension(&left)?;
         if oper.kind == TokenKind::Caret {
             let right = self.evaluate(&right)?;
@@ -91,21 +105,13 @@ impl Interpreter {
         match oper.kind {
             TokenKind::Plus => {
                 if !left.check(&right) {
-                    return Err(Error {
-                        line: oper.line,
-                        pos: oper.pos,
-                        kind: ErrorKind::InvalidUnitsAdd,
-                    });
+                    return Err(gen_error!(ErrorKind::InvalidUnitsAdd, oper));
                 }
                 Ok(left)
             }
             TokenKind::Minus => {
                 if !left.check(&right) {
-                    return Err(Error {
-                        line: oper.line,
-                        pos: oper.pos,
-                        kind: ErrorKind::InvalidUnitsSub,
-                    });
+                    return Err(gen_error!(ErrorKind::InvalidUnitsSub, oper));
                 }
                 Ok(left)
             }
@@ -128,11 +134,7 @@ impl Interpreter {
             }),
             TokenKind::Bang => match self.factorial(right) {
                 Ok(res) => Ok(res),
-                Err(kind) => Err(Error {
-                    line: oper.line,
-                    pos: oper.pos,
-                    kind,
-                }),
+                Err(kind) => Err(gen_error!(kind, oper)),
             },
             _ => unreachable!(),
         }
@@ -163,14 +165,11 @@ impl Interpreter {
             TokenKind::Plus => {
                 // rn only checking if both have some dim, consider throwing error when only one
                 // has a dimension (ex: is 1 [kg] + 2 valid?)
+                dbg!(&left.dimension);
+                dbg!(&right.dimension);
                 if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
                     if !left_dim.check(right_dim) {
-                        // TODO: make a macro for errors
-                        return Err(Error {
-                            line: oper.line,
-                            pos: oper.pos,
-                            kind: ErrorKind::InvalidUnitsAdd,
-                        });
+                        return Err(gen_error!(ErrorKind::InvalidUnitsAdd, oper));
                     }
                 }
                 Ok(Value {
@@ -181,11 +180,7 @@ impl Interpreter {
             TokenKind::Minus => {
                 if let (Some(left_dim), Some(right_dim)) = (&left.dimension, &right.dimension) {
                     if !left_dim.check(right_dim) {
-                        return Err(Error {
-                            line: oper.line,
-                            pos: oper.pos,
-                            kind: ErrorKind::InvalidUnitsSub,
-                        });
+                        return Err(gen_error!(ErrorKind::InvalidUnitsSub, oper));
                     }
                 }
                 Ok(Value {
@@ -206,11 +201,7 @@ impl Interpreter {
             }
             TokenKind::Slash => {
                 if right.number == 0.0 {
-                    Err(Error {
-                        line: oper.line,
-                        pos: oper.pos,
-                        kind: ErrorKind::DivisionByZero,
-                    })
+                    Err(gen_error!(ErrorKind::DivisionByZero, oper))
                 } else {
                     let number = left.number / right.number;
                     let dimension = match (left.dimension, right.dimension) {
@@ -239,11 +230,7 @@ impl Interpreter {
         if let Some(expr) = self.environment.get(&name.lexeme) {
             Ok(expr.clone())
         } else {
-            Err(Error {
-                line: name.line,
-                pos: name.pos,
-                kind: ErrorKind::UndefinedVariable,
-            })
+            Err(gen_error!(ErrorKind::UndefinedVariable, name))
         }
     }
 
