@@ -7,14 +7,14 @@ use crate::{
     parser, scanner,
 };
 
-pub fn run(source: String, environment: Environment) -> Result<Environment, Error> {
+pub fn run(source: String, environment: Environment, is_repl: bool) -> Result<Environment, Error> {
     let mut scanner = scanner::Scanner::new(source);
     let tokens = scanner.scan()?;
     let mut parser = parser::Parser::new(tokens.to_owned());
     let expressions = parser.parse()?;
     let mut interpreter = interpreter::Interpreter::new(expressions.to_owned(), environment);
 
-    interpreter.interpret()
+    interpreter.interpret(is_repl)
 }
 
 pub fn run_prompt() {
@@ -35,7 +35,7 @@ pub fn run_prompt() {
                 if src.is_empty() {
                     continue;
                 }
-                match run(src.clone(), environment.clone()) {
+                match run(src.clone(), environment.clone(), true) {
                     Ok(en) => environment = en,
                     Err(er) => er.print_error(&src),
                 }

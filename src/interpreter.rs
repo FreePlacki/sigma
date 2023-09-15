@@ -30,11 +30,14 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self) -> Result<Environment, Error> {
+    pub fn interpret(&mut self, is_repl: bool) -> Result<Environment, Error> {
         for expr in &self.expressions.clone() {
             let res = self.evaluate(expr)?;
-            // TODO: fix the formatting with float errors
-            // https://stackoverflow.com/questions/28655362/how-does-one-round-a-floating-point-number-to-a-specified-number-of-digits
+            match &expr {
+                Expr::Assign { .. } if !is_repl => continue,
+                Expr::Variable { name } if !is_repl => print!("{} = ", name.lexeme),
+                _ => {}
+            }
             if let Some(dim) = res.dimension {
                 println!("{} [{}]", res.number, dim.lexeme);
             } else {
