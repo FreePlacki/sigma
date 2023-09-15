@@ -102,16 +102,31 @@ impl Parser {
     }
 
     fn factor(&mut self) -> Result<Expr, Error> {
-        let mut expr = self.unary()?;
+        let mut expr = self.exponent()?;
 
         while self.consume_match(&[TokenKind::Star, TokenKind::Slash]) {
             let operator = self.tokens[self.current - 1].to_owned();
-            let right = self.unary()?;
+            let right = self.exponent()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
                 right: Box::new(right),
             };
+        }
+        Ok(expr)
+    }
+
+    fn exponent(&mut self) -> Result<Expr, Error> {
+        let expr = self.unary()?;
+
+        if self.consume_match(&[TokenKind::Caret]) {
+            let operator = self.tokens[self.current - 1].to_owned();
+            let right = self.exponent()?;
+            return Ok(Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            });
         }
         Ok(expr)
     }
@@ -125,23 +140,9 @@ impl Parser {
                 right: Box::new(right),
             });
         }
-        self.exponent()
+        self.factorial()
     }
 
-    fn exponent(&mut self) -> Result<Expr, Error> {
-        let expr = self.factorial()?;
-
-        if self.consume_match(&[TokenKind::Caret]) {
-            let operator = self.tokens[self.current - 1].to_owned();
-            let right = self.exponent()?;
-            return Ok(Expr::Binary {
-                left: Box::new(expr),
-                operator,
-                right: Box::new(right),
-            });
-        }
-        Ok(expr)
-    }
 
     fn factorial(&mut self) -> Result<Expr, Error> {
         let expr = self.primary()?;
