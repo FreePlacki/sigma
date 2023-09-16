@@ -131,6 +131,13 @@ impl Scanner {
                     self.advance();
                 }
                 // consume '\n'
+                if self.current == self.source.len() {
+                    return Err(Error {
+                        line: self.line,
+                        pos: 0,
+                        kind: ErrorKind::ExpectedExpression,
+                    });
+                }
                 self.advance();
                 self.line += 1;
                 self.pos = 0;

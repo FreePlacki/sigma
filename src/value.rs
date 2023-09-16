@@ -22,7 +22,6 @@ impl Dimension {
     }
 
     fn fold_units(units: Vec<Unit>) -> Vec<Unit> {
-        // TODO: remove units with exp == 0
         let res: Vec<Unit> = units.iter().fold(vec![], |mut acc, unit| {
             if let Some(entry) = acc.iter_mut().find(|u| u.name == unit.name) {
                 entry.exponent += unit.exponent;
@@ -31,7 +30,7 @@ impl Dimension {
             }
             acc
         });
-        res
+        res.into_iter().filter(|u| !float_eq(u.exponent, 0.0)).collect()
     }
 
     fn to_lexeme(units: Vec<Unit>) -> String {

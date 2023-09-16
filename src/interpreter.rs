@@ -33,21 +33,30 @@ impl Interpreter {
     pub fn interpret(&mut self, is_repl: bool) -> Result<Environment, Error> {
         for expr in &self.expressions.clone() {
             let res = self.evaluate(expr)?;
+            let mut output = String::new();
+
             match &expr {
                 Expr::Assign { .. } if !is_repl => continue,
-                Expr::Variable { name } if !is_repl => print!("{} = ", name.lexeme),
+                Expr::Variable { name } if !is_repl => {
+                    output.push_str(format!("{} = ", name.lexeme).as_str())
+                }
                 _ => {}
             }
-            let formatted_num = if res.number.abs() > 1e4 || res.number.abs() < 1e-4 {
-                format!("{:e}", res.number)
-            } else {
-                res.number.to_string()
-            };
+
+            let formatted_num =
+                if res.number != 0.0 && (res.number.abs() > 1e4 || res.number.abs() < 1e-4) {
+                    format!("{:e}", res.number)
+                } else {
+                    format!("{}", res.number)
+                };
+            output.push_str(formatted_num.as_str());
             if let Some(dim) = res.dimension {
-                println!("{formatted_num} [{}]", dim.lexeme);
-            } else {
-                println!("{formatted_num}");
+                if !dim.is_dimensionless() {
+                    output.push_str(format!(" [{}]", dim.lexeme).as_str());
+                }
             }
+
+            println!("{output}");
         }
         Ok(self.environment.clone())
     }
