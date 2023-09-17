@@ -81,7 +81,7 @@ impl Scanner {
 
             '0'..='9' | '.' => {
                 while self.peek().is_ascii_digit()
-                    || ([',', '_'].contains(&self.peek()) && self.peek_next().is_ascii_digit())
+                    || (self.peek() == '_' && self.peek_next().is_ascii_digit())
                 {
                     self.advance();
                 }

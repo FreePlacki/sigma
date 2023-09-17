@@ -7,6 +7,7 @@ mod scanner;
 mod tokens;
 mod value;
 mod unit;
+mod functions;
 
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();

@@ -15,7 +15,7 @@ pub enum ErrorKind {
     InvalidUnitsPow,
     UndefinedVariable,
     UndefinedFunction,
-    InvalidNumberOfArgs(usize, usize),
+    InvalidNumberOfArgs(String, usize, usize),
     ExpectDimensionless(String),
 }
 
@@ -39,11 +39,21 @@ impl Error {
             ErrorKind::InvalidAssignment => "Can only assign values to variables".into(),
             ErrorKind::InvalidUnitsAdd => "Cannot add values with different units".into(),
             ErrorKind::InvalidUnitsSub => "Cannot subtract values with different units".into(),
-            ErrorKind::InvalidUnitsPow => "Can only raise to a power of dimensionless values".into(),
+            ErrorKind::InvalidUnitsPow => {
+                "Can only raise to a power of dimensionless values".into()
+            }
             ErrorKind::UndefinedVariable => "Undefined variable".into(),
             ErrorKind::UndefinedFunction => "Undefined function".into(),
-            ErrorKind::InvalidNumberOfArgs(expected, given) => {
-                format!("Function takes {expected} arguments but {given} were provided")
+            ErrorKind::InvalidNumberOfArgs(name, expected, given) => {
+                format!(
+                    "'{name}' takes {expected} argument{} but {given} {} provided",
+                    if *expected == 1 { "" } else { "s" },
+                    if *given == 0 || *given == 1 {
+                        "was"
+                    } else {
+                        "were"
+                    }
+                )
             }
             ErrorKind::ExpectDimensionless(name) => {
                 format!("Can only take '{name}' of dimensionless values")

@@ -12,6 +12,7 @@ pub struct Interpreter {
     environment: Environment,
 }
 
+#[macro_export]
 macro_rules! gen_error {
     ($kind:expr, $oper:expr) => {
         Error {
@@ -49,10 +50,10 @@ impl Interpreter {
                     format!("{}", res.number)
                 };
             output.push_str(formatted_num.as_str());
-            if let Some(dim) = res.dimension {
-                if !dim.is_dimensionless() {
-                    output.push_str(format!(" [{}]", dim.lexeme).as_str());
-                }
+            if !res.is_dimensionless() {
+                // TODO: format kg^0.333333333 as kg^0.33
+                // idea: create a method on Dimension
+                output.push_str(format!(" [{}]", res.dimension.unwrap().lexeme).as_str());
             }
 
             println!("{output}");
@@ -60,7 +61,7 @@ impl Interpreter {
         Ok(self.environment.clone())
     }
 
-    fn evaluate(&mut self, expr: Expr) -> Result<Value, Error> {
+    pub fn evaluate(&mut self, expr: Expr) -> Result<Value, Error> {
         match expr {
             Expr::Number { value, dimension } => {
                 self.eval_number(value.as_str(), dimension.to_owned())
@@ -165,10 +166,8 @@ impl Interpreter {
         if value.number < 0.0 {
             return Err(ErrorKind::FactorialDomain);
         }
-        if let Some(dim) = value.dimension {
-            if !dim.is_dimensionless() {
-                return Err(ErrorKind::ExpectDimensionless("factorial".into()));
-            }
+        if !value.is_dimensionless() {
+            return Err(ErrorKind::ExpectDimensionless("factorial".into()));
         }
         let mut res = 1.0;
         for i in 2..=value.number.round() as usize {
@@ -292,59 +291,13 @@ impl Interpreter {
     }
 
     fn eval_function(&mut self, name: Token, arguments: Vec<Expr>) -> Result<Value, Error> {
-        macro_rules! assert_arity {
-            ($arity:expr) => {
-                if arguments.len() != $arity {
-                    return Err(gen_error!(
-                        ErrorKind::InvalidNumberOfArgs($arity, arguments.len()),
-                        name
-                    ));
-                }
-            };
+        let mut arg_values = Vec::<Value>::new();
+        for expr in arguments {
+            let value = self.evaluate(expr)?;
+            arg_values.push(value);
         }
 
-        macro_rules! assert_dimensionless {
-            ($fun_name:expr, $value:expr) => {
-                if let Some(dim) = $value.dimension {
-                    if !dim.is_dimensionless() {
-                        return Err(gen_error!(ErrorKind::ExpectDimensionless($fun_name), name));
-                    }
-                }
-            };
-        }
-
-        match name.lexeme.as_str() {
-            "sqrt" => {
-                assert_arity!(1);
-
-                let value = self.evaluate(arguments[0].to_owned())?;
-                let number = value.number.sqrt();
-                let dimension = value.dimension.map(|dim| dim.pow_dim(0.5));
-
-                Ok(Value { number, dimension })
-            }
-            "nthroot" => {
-                assert_arity!(2);
-
-                let value = self.evaluate(arguments[0].to_owned())?;
-                let power = self.evaluate(arguments[1].to_owned())?.number;
-                let number = value.number.powf(1.0 / power);
-                let dimension = value.dimension.map(|dim| dim.pow_dim(1.0 / power));
-
-                Ok(Value { number, dimension })
-            }
-            "sin" => {
-                assert_arity!(1);
-
-                let value = self.evaluate(arguments[0].to_owned())?;
-                assert_dimensionless!("sin".into(), value);
-
-                let number = value.number.sin();
-
-                Ok(Value {number, dimension: None})
-            }
-            _ => Err(gen_error!(ErrorKind::UndefinedFunction, name)),
-        }
+        crate::functions::eval_function(name, arg_values)
     }
 
     fn eval_assign(&mut self, name: Token, value: Expr) -> Result<Value, Error> {

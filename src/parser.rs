@@ -172,13 +172,14 @@ impl Parser {
                 let argument = self.term()?;
                 arguments.push(argument);
 
-                if self.consume_match(&[TokenKind::RightParen]) {
+                if self.tokens[self.current].kind == TokenKind::RightParen {
                     break;
                 }
 
                 self.consume(TokenKind::Comma, ErrorKind::MissingComma)?;
             }
         }
+        self.consume(TokenKind::RightParen, ErrorKind::MissingRightParen)?;
 
         Ok(Expr::Call { name, arguments }) }
 

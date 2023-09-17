@@ -6,6 +6,16 @@ pub struct Value {
     pub dimension: Option<Dimension>,
 }
 
+impl Value {
+    pub fn is_dimensionless(&self) -> bool {
+        if let Some(dim) = &self.dimension {
+            dim.is_dimensionless()
+        } else {
+            true
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Dimension {
     pub lexeme: String,
