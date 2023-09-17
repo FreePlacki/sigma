@@ -17,6 +17,7 @@ pub enum ErrorKind {
     UndefinedFunction,
     InvalidNumberOfArgs(String, usize, usize),
     ExpectDimensionless(String),
+    InvalidDomain(String),
 }
 
 pub struct Error {
@@ -57,6 +58,9 @@ impl Error {
             }
             ErrorKind::ExpectDimensionless(name) => {
                 format!("Can only take '{name}' of dimensionless values")
+            }
+            ErrorKind::InvalidDomain(name) => {
+                format!("Argument out of the domain of '{name}'")
             }
         }
     }
