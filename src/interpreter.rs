@@ -31,10 +31,8 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self, is_repl: bool) -> Result<Environment, Error> {
-        for expr in &self.expressions.clone() {
-            let res = self.evaluate(expr)?;
+        for expr in self.expressions.clone() {
             let mut output = String::new();
-
             match &expr {
                 Expr::Assign { .. } if !is_repl => continue,
                 Expr::Variable { name } if !is_repl => {
@@ -42,6 +40,7 @@ impl Interpreter {
                 }
                 _ => {}
             }
+            let res = self.evaluate(expr)?;
 
             let formatted_num =
                 if res.number != 0.0 && (res.number.abs() > 1e4 || res.number.abs() < 1e-4) {
@@ -61,17 +60,22 @@ impl Interpreter {
         Ok(self.environment.clone())
     }
 
-    fn evaluate(&mut self, expr: &Expr) -> Result<Value, Error> {
+    fn evaluate(&mut self, expr: Expr) -> Result<Value, Error> {
         match expr {
-            Expr::Number { value, dimension } => self.eval_number(value, dimension.to_owned()),
-            Expr::Unary { operator, right } => self.eval_unary(operator, *right.to_owned()),
+            Expr::Number { value, dimension } => {
+                self.eval_number(value.as_str(), dimension.to_owned())
+            }
+            Expr::Unary { operator, right } => self.eval_unary(&operator, *right.to_owned()),
             Expr::Binary {
                 left,
                 operator,
                 right,
-            } => self.eval_binary(*left.to_owned(), operator, *right.to_owned()),
-            Expr::Grouping { expression } => self.evaluate(expression),
+            } => self.eval_binary(*left.to_owned(), &operator, *right.to_owned()),
+            Expr::Grouping { expression } => self.evaluate(*expression),
             Expr::Variable { name } => self.eval_variable(name.to_owned()),
+            Expr::Call { name, arguments } => {
+                self.eval_function(name.to_owned(), arguments.to_owned())
+            }
             Expr::Assign { name, value } => self.eval_assign(name.to_owned(), *value.to_owned()),
         }
     }
@@ -114,7 +118,7 @@ impl Interpreter {
     ) -> Result<Dimension, Error> {
         let left = self.eval_dimension(&left)?;
         if oper.kind == TokenKind::Caret {
-            let right = self.evaluate(&right)?;
+            let right = self.evaluate(right)?;
             return Ok(left.pow_dim(right.number));
         }
         let right = self.eval_dimension(&right)?;
@@ -143,7 +147,7 @@ impl Interpreter {
     }
 
     fn eval_unary(&mut self, oper: &Token, right: Expr) -> Result<Value, Error> {
-        let right = self.evaluate(&right)?;
+        let right = self.evaluate(right)?;
         match oper.kind {
             TokenKind::Minus => Ok(Value {
                 number: -1.0 * right.number,
@@ -163,7 +167,7 @@ impl Interpreter {
         }
         if let Some(dim) = value.dimension {
             if !dim.is_dimensionless() {
-                return Err(ErrorKind::FactorialDimension);
+                return Err(ErrorKind::ExpectDimensionless("factorial".into()));
             }
         }
         let mut res = 1.0;
@@ -177,8 +181,8 @@ impl Interpreter {
     }
 
     fn eval_binary(&mut self, left: Expr, oper: &Token, right: Expr) -> Result<Value, Error> {
-        let left = self.evaluate(&left)?;
-        let right = self.evaluate(&right)?;
+        let left = self.evaluate(left)?;
+        let right = self.evaluate(right)?;
 
         let check_left = left.dimension.is_some()
             && left
@@ -287,8 +291,64 @@ impl Interpreter {
         }
     }
 
+    fn eval_function(&mut self, name: Token, arguments: Vec<Expr>) -> Result<Value, Error> {
+        macro_rules! assert_arity {
+            ($arity:expr) => {
+                if arguments.len() != $arity {
+                    return Err(gen_error!(
+                        ErrorKind::InvalidNumberOfArgs($arity, arguments.len()),
+                        name
+                    ));
+                }
+            };
+        }
+
+        macro_rules! assert_dimensionless {
+            ($fun_name:expr, $value:expr) => {
+                if let Some(dim) = $value.dimension {
+                    if !dim.is_dimensionless() {
+                        return Err(gen_error!(ErrorKind::ExpectDimensionless($fun_name), name));
+                    }
+                }
+            };
+        }
+
+        match name.lexeme.as_str() {
+            "sqrt" => {
+                assert_arity!(1);
+
+                let value = self.evaluate(arguments[0].to_owned())?;
+                let number = value.number.sqrt();
+                let dimension = value.dimension.map(|dim| dim.pow_dim(0.5));
+
+                Ok(Value { number, dimension })
+            }
+            "nthroot" => {
+                assert_arity!(2);
+
+                let value = self.evaluate(arguments[0].to_owned())?;
+                let power = self.evaluate(arguments[1].to_owned())?.number;
+                let number = value.number.powf(1.0 / power);
+                let dimension = value.dimension.map(|dim| dim.pow_dim(1.0 / power));
+
+                Ok(Value { number, dimension })
+            }
+            "sin" => {
+                assert_arity!(1);
+
+                let value = self.evaluate(arguments[0].to_owned())?;
+                assert_dimensionless!("sin".into(), value);
+
+                let number = value.number.sin();
+
+                Ok(Value {number, dimension: None})
+            }
+            _ => Err(gen_error!(ErrorKind::UndefinedFunction, name)),
+        }
+    }
+
     fn eval_assign(&mut self, name: Token, value: Expr) -> Result<Value, Error> {
-        let value = self.evaluate(&value)?;
+        let value = self.evaluate(value)?;
         self.environment.insert(name.lexeme, value.clone());
         Ok(value)
     }

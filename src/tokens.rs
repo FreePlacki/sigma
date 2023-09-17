@@ -22,6 +22,7 @@ pub enum TokenKind {
     Bang,
     Caret,
     Equals,
+    Comma,
 
     // Literals.
     Identifier,

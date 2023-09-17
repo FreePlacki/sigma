@@ -143,9 +143,8 @@ impl Parser {
         self.factorial()
     }
 
-
     fn factorial(&mut self) -> Result<Expr, Error> {
-        let expr = self.primary()?;
+        let expr = self.call()?;
 
         if self.consume_match(&[TokenKind::Bang]) {
             let operator = self.tokens[self.current - 1].to_owned();
@@ -156,6 +155,32 @@ impl Parser {
         }
         Ok(expr)
     }
+
+    fn call(&mut self) -> Result<Expr, Error> {
+        // NOTE: We can safely do current + 1 because there is always an EOF token
+        if self.tokens[self.current + 1].kind != TokenKind::LeftParen {
+            return self.primary();
+        }
+
+        let name = self.consume(TokenKind::Identifier, ErrorKind::ExpectedFunctionName)?;
+        let name = name.to_owned();
+        self.advance(); // consume '('
+
+        let mut arguments = Vec::<Expr>::new();
+        if self.tokens[self.current].kind != TokenKind::RightParen {
+            loop {
+                let argument = self.term()?;
+                arguments.push(argument);
+
+                if self.consume_match(&[TokenKind::RightParen]) {
+                    break;
+                }
+
+                self.consume(TokenKind::Comma, ErrorKind::MissingComma)?;
+            }
+        }
+
+        Ok(Expr::Call { name, arguments }) }
 
     fn primary(&mut self) -> Result<Expr, Error> {
         self.advance();

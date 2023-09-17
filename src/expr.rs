@@ -21,6 +21,10 @@ pub enum Expr {
     Variable {
         name: Token,
     },
+    Call {
+        name: Token,
+        arguments: Vec<Expr>,
+    },
     Assign {
         name: Token,
         value: Box<Expr>,

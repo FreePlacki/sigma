@@ -77,6 +77,7 @@ impl Scanner {
             '^' => add_token!(TokenKind::Caret),
             '!' => add_token!(TokenKind::Bang),
             '=' => add_token!(TokenKind::Equals),
+            ',' => add_token!(TokenKind::Comma),
 
             '0'..='9' | '.' => {
                 while self.peek().is_ascii_digit()
