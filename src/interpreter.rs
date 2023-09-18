@@ -34,14 +34,15 @@ impl Interpreter {
     pub fn interpret(&mut self, is_repl: bool) -> Result<Environment, Error> {
         for expr in self.expressions.clone() {
             let mut output = String::new();
+            let res = self.evaluate(expr.clone())?;
+
             match &expr {
-                Expr::Assign { .. } if !is_repl => continue,
+                Expr::Assign { .. } | Expr::Import { .. } if !is_repl => continue,
                 Expr::Variable { name } if !is_repl => {
                     output.push_str(format!("{} = ", name.lexeme).as_str())
                 }
                 _ => {}
             }
-            let res = self.evaluate(expr)?;
 
             let formatted_num =
                 if res.number != 0.0 && (res.number.abs() > 1e4 || res.number.abs() < 1e-4) {
@@ -61,7 +62,7 @@ impl Interpreter {
         Ok(self.environment.clone())
     }
 
-    pub fn evaluate(&mut self, expr: Expr) -> Result<Value, Error> {
+    fn evaluate(&mut self, expr: Expr) -> Result<Value, Error> {
         match expr {
             Expr::Number { value, dimension } => {
                 self.eval_number(value.as_str(), dimension.to_owned())
@@ -78,7 +79,25 @@ impl Interpreter {
                 self.eval_function(name.to_owned(), arguments.to_owned())
             }
             Expr::Assign { name, value } => self.eval_assign(name.to_owned(), *value.to_owned()),
+            Expr::Import { file } => self.eval_import(file),
         }
+    }
+
+    fn eval_import(&mut self, file: String) -> Result<Value, Error> {
+        let contents = std::fs::read_to_string(&file);
+        if let Ok(contents) = contents {
+            match crate::repl::run(contents.clone(), self.environment.clone(), false) {
+                Ok(environment) => self.environment.extend(environment),
+                Err(e) => e.print_error(&contents),
+            }
+        } else {
+            eprintln!("Failed to read file '{}'", file);
+        }
+
+        Ok(Value {
+            number: 0.0,
+            dimension: None,
+        })
     }
 
     fn eval_number(&mut self, value: &str, dimension: Option<Box<Expr>>) -> Result<Value, Error> {

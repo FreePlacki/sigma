@@ -27,8 +27,10 @@ pub enum TokenKind {
     // Literals.
     Identifier,
     Number,
+    String,
 
     // other
+    Import,
     Error,
     Eof,
 }

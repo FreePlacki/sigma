@@ -4,6 +4,7 @@ pub enum ErrorKind {
     UnexpectedCharacter,
     ExpectedExpression,
     ExpectedFunctionName,
+    ExpectedFilename,
     MissingRightParen,
     MissingRightBracket,
     MissingComma,
@@ -15,6 +16,7 @@ pub enum ErrorKind {
     InvalidUnitsPow,
     UndefinedVariable,
     UndefinedFunction,
+    UnterminatedString,
     InvalidNumberOfArgs(String, usize, usize),
     ExpectDimensionless(String),
     InvalidDomain(String),
@@ -30,8 +32,10 @@ impl Error {
     fn message(&self, err: &ErrorKind) -> String {
         match err {
             ErrorKind::UnexpectedCharacter => "Unexpected character".into(),
+            ErrorKind::UnterminatedString => "Unterminated string".into(),
             ErrorKind::ExpectedExpression => "Unable to parse expression".into(),
             ErrorKind::ExpectedFunctionName => "Expected a function name before '('".into(),
+            ErrorKind::ExpectedFilename => "Expected a string with filename after import".into(),
             ErrorKind::MissingRightParen => "Expected ')' after opening '('".into(),
             ErrorKind::MissingRightBracket => "Expected ']' after opening '['".into(),
             ErrorKind::MissingComma => "Expected ',' after a function argument".into(),

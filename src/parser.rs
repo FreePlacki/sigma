@@ -62,7 +62,27 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, Error> {
-        self.assignment()
+        if self.tokens[self.current].kind == TokenKind::Import {
+            self.import()
+        } else {
+            self.assignment()
+        }
+    }
+
+    fn import(&mut self) -> Result<Expr, Error> {
+        self.advance(); // consume import
+        let file = self.advance();
+
+        if &file.kind != &TokenKind::String {
+            return Err(Error {
+                line: self.tokens[self.current].line,
+                pos: self.current - 1,
+                kind: ErrorKind::ExpectedFilename,
+            });
+        }
+
+        let file = file.lexeme.to_owned();
+        Ok(Expr::Import { file })
     }
 
     fn assignment(&mut self) -> Result<Expr, Error> {
@@ -181,7 +201,8 @@ impl Parser {
         }
         self.consume(TokenKind::RightParen, ErrorKind::MissingRightParen)?;
 
-        Ok(Expr::Call { name, arguments }) }
+        Ok(Expr::Call { name, arguments })
+    }
 
     fn primary(&mut self) -> Result<Expr, Error> {
         self.advance();

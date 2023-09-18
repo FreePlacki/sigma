@@ -29,4 +29,7 @@ pub enum Expr {
         name: Token,
         value: Box<Expr>,
     },
+    Import {
+        file: String,
+    }
 }

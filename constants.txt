@@ -1,0 +1,33 @@
+# math
+pi = 3.141_592_654
+e = 2.718_281_828
+phi = (1 + sqrt(5)) / 2
+
+# physics
+# (see: https://en.wikipedia.org/wiki/List_of_physical_constants#Table_of_physical_constants)
+c = 2.99_792_458e8          [m / s]
+h = 6.626_070_15e-34        [J / Hz]
+mu_0 = 1.256_637_062        [N / A^2]
+epsilon_0 = 1 / (mu_0*c^2)
+k_B = 1.380_649e-23         [J / K]
+G = 6.674_302e-11           [N*m^2 / kg^2]
+k_e = 8.987_551_792e9       [N*m^2 / C^2]
+sigma = 5.670_374_419e-8    [W / (m^2*K^4)]
+q_e = 1.602_176_634e-19     [C]
+m_e = 9.109_383_702e-31     [kg]
+m_p = 1.672_621_924e-27     [kg]
+m_n = 1.674_927_498e-27     [kg]
+m_u = 1.660_539_067e-27     [kg]
+N_A = 6.022_140_76e-23      [mol^-1]
+#R = N_A * k_B
+
+g = 9.81                    [m / s^2]
+M_E = 5.9722e24             [kg]
+M_M = 7.342e22              [kg]
+M_S = 1.9885e30             [kg]
+R_E = 6.371e6               [m]
+R_M = 1.738e6               [m]
+R_S = 6.957e8               [m]
+AU = 1.495_979e11           [m]
+LD = 3.843_99e8             [m] # lunar distance (earth-moon)
+

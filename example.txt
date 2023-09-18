@@ -1,8 +1,8 @@
+import "constants.txt"
+
 m1 = 25 [kg]
 m2 = .62 * m1 - 2 [kg]
 r = (4 [m^.5])^2
-G = 6.67e-11 [N*m^2/kg^2]
 
-# a comment
 Fg = G * m1*m2 / r^2
 Fg

@@ -100,7 +100,9 @@ impl Scanner {
                 if self.peek() == '.' && self.peek_next().is_ascii_digit() {
                     self.advance();
 
-                    while self.peek().is_ascii_digit() {
+                    while self.peek().is_ascii_digit()
+                        || (self.peek() == '_' && self.peek_next().is_ascii_digit())
+                    {
                         self.advance();
                     }
                     if self.peek() == 'e' {
@@ -156,9 +158,34 @@ impl Scanner {
                     self.advance();
                 }
 
+                let lexeme = self.source[self.start..self.current].to_string();
+                let token = if lexeme == "import" {
+                    TokenKind::Import
+                } else {
+                    TokenKind::Identifier
+                };
+
+                add_token!(token, lexeme)
+            }
+
+            '"' | '\'' => {
+                while self.peek() != c && self.source.len() != self.current {
+                    if self.peek() == '\n' {
+                        self.line += 1;
+                    }
+                    self.advance();
+                }
+                if self.source.len() == self.current {
+                    return Err(Error {
+                        line: self.line,
+                        pos: self.pos - 1,
+                        kind: ErrorKind::UnterminatedString,
+                    });
+                }
+                self.advance(); // closing " / '
                 add_token!(
-                    TokenKind::Identifier,
-                    self.source[self.start..self.current].to_string()
+                    TokenKind::String,
+                    self.source[self.start + 1..self.current - 1].to_string()
                 )
             }
 
