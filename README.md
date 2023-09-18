@@ -1,43 +1,31 @@
-## Syntax
+# Installation
 
-### Variable declaration
-```
-abcd_123a = -1
-```
-Units after ":"
-```
-m: kg = 5.2
+```bash
+git clone --depth=1 https://github.com/FreePlacki/sigma.git &&
+cd sigma &&
+cargo build --release 
 ```
 
----
-
-### Evaluating expressions
-```
-2m/(5pi*e)^2
+You can put the execuatble in `~/.local/bin`:
+```bash
+cp target/release/sigma ~/.local/bin
 ```
 
-"`*`" operator is optional, but consider the following:
-
-```
-ab = 5
-a = 1
-b = 2
-
-ab  # >> 5
-a*b # >> 2
+Add to path (if you don't already have it):
+```bash
+export PATH=$PATH:~/.local/bin
 ```
 
----
-### Operations
-`+` addition
+Create `~/.sigma` and put in `constants.txt`:
+```bash
+mkdir ~/.sigma && cp constants.txt ~/.sigma
+```
 
-`-` subtraction
+# Usage
+Run:
+```bash
+sigma
+```
+without arguments to enter repl or provide a file as an argument.
 
-`*` multiplication
-
-`/` division
-
-`^` power (use fractions for roots)
-
-`!` factorial
-
+For example usage see example.txt
