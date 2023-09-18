@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 colored = "2"
+dirs = "5.0.1"
 rustyline = "10.0"

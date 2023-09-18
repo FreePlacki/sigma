@@ -22,7 +22,12 @@ pub fn run_prompt() {
 
     let mut rl = Editor::<()>::new().unwrap(); // TODO: add helper
     rl.set_max_history_size(69);
-    rl.load_history("history.txt").ok();
+
+    let mut sigma_dir = dirs::home_dir().expect("Cannot find home directory");
+    sigma_dir.push(".sigma");
+    let mut history_dir = sigma_dir.clone();
+    history_dir.push("history.txt");
+    rl.load_history(&history_dir).ok();
 
     let prompt = format!("{} ", "Σ ❯❯".blue().bold());
 
@@ -44,5 +49,9 @@ pub fn run_prompt() {
             Err(_) => break,
         }
     }
-    rl.save_history("history.txt").unwrap();
+    if let Err(e) = std::fs::create_dir_all(&sigma_dir) {
+        eprintln!("Cannot create directory '~/.sigma', {e}");
+        return;
+    }
+    rl.save_history(&history_dir).unwrap();
 }

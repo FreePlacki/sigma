@@ -37,7 +37,8 @@ impl Interpreter {
             let res = self.evaluate(expr.clone())?;
 
             match &expr {
-                Expr::Assign { .. } | Expr::Import { .. } if !is_repl => continue,
+                Expr::Import { .. } => continue,
+                Expr::Assign { .. } if !is_repl => continue,
                 Expr::Variable { name } if !is_repl => {
                     output.push_str(format!("{} = ", name.lexeme).as_str())
                 }
@@ -85,6 +86,14 @@ impl Interpreter {
 
     fn eval_import(&mut self, file: String) -> Result<Value, Error> {
         let contents = std::fs::read_to_string(&file);
+        let contents = if let Ok(_) = contents {
+            contents
+        } else {
+            let mut sigma_dir = dirs::home_dir().expect("Cannot find home directory");
+            sigma_dir.push(".sigma");
+            sigma_dir.push(&file);
+            std::fs::read_to_string(&sigma_dir)
+        };
         if let Ok(contents) = contents {
             match crate::repl::run(contents.clone(), self.environment.clone(), false) {
                 Ok(environment) => self.environment.extend(environment),
