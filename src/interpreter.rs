@@ -31,7 +31,11 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, is_repl: bool) -> Result<Environment, Error> {
+    pub fn interpret(&mut self, is_repl: bool, filename: String) -> Result<Environment, Error> {
+        if filename != "constants.sigm" {
+            let _ = self.eval_import("constants.sigm".into());
+        }
+
         for expr in self.expressions.clone() {
             let mut output = String::new();
             let res = self.evaluate(expr.clone())?;
@@ -95,12 +99,13 @@ impl Interpreter {
             std::fs::read_to_string(&sigma_dir)
         };
         if let Ok(contents) = contents {
-            match crate::repl::run(contents.clone(), self.environment.clone(), false) {
+            match crate::repl::run(contents.clone(), self.environment.clone(), false, file) {
                 Ok(environment) => self.environment.extend(environment),
                 Err(e) => e.print_error(&contents),
             }
         } else {
-            eprintln!("Failed to read file '{}'", file);
+            // eprintln!("Failed to read file '{}'", file);
+            return Err(Error {kind: ErrorKind::CannotReadFile(file), line: 0, pos: 0});
         }
 
         Ok(Value {

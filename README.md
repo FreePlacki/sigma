@@ -16,9 +16,9 @@ Add to path (if you don't already have it):
 export PATH=$PATH:~/.local/bin
 ```
 
-Create `~/.sigma` and put in `constants.txt`:
+Create `~/.sigma` and put in `constants.sigm`:
 ```bash
-mkdir ~/.sigma && cp constants.txt ~/.sigma
+mkdir ~/.sigma && cp constants.sigm ~/.sigma
 ```
 
 # Usage
@@ -28,4 +28,4 @@ sigma
 ```
 without arguments to enter repl or provide a file as an argument.
 
-For example usage see example.txt
+For example usage see `example.sigm`

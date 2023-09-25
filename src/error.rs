@@ -20,6 +20,7 @@ pub enum ErrorKind {
     InvalidNumberOfArgs(String, usize, usize),
     ExpectDimensionless(String),
     InvalidDomain(String),
+    CannotReadFile(String),
 }
 
 pub struct Error {
@@ -65,6 +66,9 @@ impl Error {
             }
             ErrorKind::InvalidDomain(name) => {
                 format!("Argument out of the domain of '{name}'")
+            }
+            ErrorKind::CannotReadFile(name) => {
+                format!("Cannot read file: '{name}'")
             }
         }
     }

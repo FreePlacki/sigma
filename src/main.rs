@@ -15,7 +15,7 @@ fn main() {
         2 => {
             let contents = std::fs::read_to_string(&args[1]);
             if let Ok(contents) = contents {
-                if let Err(e) = repl::run(contents.clone(), interpreter::Environment::new(), false) {
+                if let Err(e) = repl::run(contents.clone(), interpreter::Environment::new(), false, args[1].clone()) {
                     e.print_error(&contents);
                 }
             } else {
