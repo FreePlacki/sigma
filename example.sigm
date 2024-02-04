@@ -1,4 +1,4 @@
-import "constants.txt"
+import "constants.sigm"
 
 m1 = 25 [kg]
 m2 = .62 * m1 - 2 [kg]

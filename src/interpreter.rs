@@ -57,8 +57,6 @@ impl Interpreter {
                 };
             output.push_str(formatted_num.as_str());
             if !res.is_dimensionless() {
-                // TODO: format kg^0.333333333 as kg^0.33
-                // idea: create a method on Dimension
                 output.push_str(format!(" [{}]", res.dimension.unwrap().lexeme).as_str());
             }
 

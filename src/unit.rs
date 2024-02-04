@@ -71,7 +71,11 @@ impl Unit {
         if float_eq(self.exponent, 1.0) {
             self.name.clone()
         } else {
-            format!("{}^{}", self.name, self.exponent)
+            format!("{}^{}", self.name, if self.exponent.fract() == 0.0 {
+                format!("{:.0}", self.exponent)
+            } else {
+                format!("{:.2}", self.exponent).trim_end_matches('0').to_string()
+            })
         }
     }
 }
